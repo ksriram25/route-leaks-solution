@@ -27,13 +27,13 @@
 <?rfc sortrefs="yes" ?>
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
-	
+
 <rfc category="std" docName="draft-ietf-idr-route-leak-detection-mitigation-11" ipr="trust200902">
 
   <!-- ***** FRONT MATTER ***** -->
 
   <front>
-    <!-- The abbreviated title is used in the page header - it is only necessary if the 
+    <!-- The abbreviated title is used in the page header - it is only necessary if the
          full title is longer than 39 characters -->
 
     <title abbrev="Route Leak Detection and Mitigation"> Methods for Detection and Mitigation of BGP Route Leaks </title>
@@ -57,7 +57,7 @@
     </author>
 
     <author fullname="Alexander Azimov" initials="A." role="editor" surname="Azimov">
-<organization abbrev="Yandex">Yandex</organization>
+      <organization abbrev="Yandex">Yandex</organization>
       <address>
          <postal>
           <street></street>
@@ -69,99 +69,48 @@
         <email>a.e.azimov@gmail.com</email>
       </address>
     </author>
-     
-<!--
-        <author fullname="Doug Montgomery" initials="D." surname="Montgomery">
-      <organization abbrev="USA NIST">USA National Institute of Standards and Technology</organization>
-      <address>
-        <email>dougm@nist.gov</email>
-      </address>
-    </author>
 
-	<author fullname="Brian Dickson" initials="B." surname="Dickson">
-       <organization></organization>
-      <address>
-        <email>brian.peter.dickson@gmail.com</email>
-      </address>
-    </author> 
-
-
-	<author fullname="Keyur Patel" initials="K." surname="Patel">
-       <organization>Arrcus</organization>
-      <address>
-        <email>keyur@arrcus.com</email>
-      </address>
-    </author> 
-
-	<author fullname="Andrei Robachevsky" initials="A." surname="Robachevsky">
-       <organization>Internet Society</organization>
-      <address>
-        <email>robachevsky@isoc.org</email>
-      </address>
-    </author> 
--->
-
-
-    
     <date year="2019" />
-
-    <!-- If the month and year are both specified and are the current ones, xml2rfc will fill 
-         in the current day for you. If only the current year is specified, xml2rfc will fill 
-	 in the current day and month for you. If the year is not the current one, it is 
-	 necessary to specify at least a month (xml2rfc assumes day="1" if not specified for the 
-	 purpose of calculating the expiry date).  With drafts it is normally sufficient to 
-	 specify just the year. -->
-
-    <!-- Meta-data Declarations -->
 
     <area>Routing</area>
 
     <workgroup>IDR and SIDR</workgroup>
 
-    <!-- WG name at the upperleft corner of the doc,
-         IETF is fine for individual submissions.  
-	 If this element is not present, the default is "Network Working Group",
-         which is used by the RFC Editor as a nod to the history of the IETF. -->
-
     <keyword>BGP, BGPsec, Route Leak, Route-Leak Mitigation, BGP Security</keyword>
 
-    <!-- Keywords will be incorporated into HTML output
-         files in a meta tag but they have no effect on text or nroff
-         output. If you submit your draft to the RFC Editor, the
-         keywords will be used for the search engine. -->
     <abstract>
       <t>
-Problem definition for route leaks and enumeration of types of route leaks are provided in RFC 7908. This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak protection (RLP) information in a Border Gateway Protocol (BGP) community.  The RLP information is carried in a new well-known transitive BGP community, called the RLP community. The RLP community helps with detection and mitigation of route leaks at ASes downstream from the leaking AS (in the path of the BGP update). This is an inter-AS (multi-hop) solution mechanism. This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
+          Problem definition for route leaks and enumeration of types of route leaks are provided in RFC 7908.
+          This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak detection information in two new well-known BGP communities.
+          This communities gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
+          This is an inter-AS (multi-hop) solution mechanism.
+          This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
+      </t>
 
-<!--
-The solution is meant to be initially implemented as an enhancement of BGP without requiring BGPsec [RFC8205]. However, when BGPsec is deployed in the future, the solution can be incorporated in BGPsec, enabling cryptographic protection for the RLP field. That would be one way of implementing the proposed solution in a secure way. The document also includes a stopgap method for detection and mitigation of route leaks for an intermediate phase when OV is deployed but BGP protocol on the wire is unchanged.
--->          
-
-   </t>
- 
     </abstract>
+
   </front>
 
   <middle>
     <section title="Introduction">
-      
-<t>
+      <t>
+        RFC 7908 <xref target="RFC7908"></xref> provides a definition of the route leak problem, and enumerates several types of route leaks.
+        For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer.
+        The commonly used policy is that a route received from a transit provider or a lateral peer may be forwarded "down only" to customers.
+      </t>
+      <t>
+        This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak information in a Border Gateway Protocol (BGP) community.
+        These document specified two well-knwon communities for these purpose - route leak detection (RLP) and route leak notification (RLN) community.
+        The configuration policies MUST be defined according to peering relations between ISPs.
+        If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured community configuration should implemented in code of routing software.
+     </t>
+      <t>
+        Described technique can be incrementally deployed.
+        If a group of big ISPs or/and IXes deploy proposed route marking, then they would be helping each other by blocking route leaks originated within one's customer cone from propagating into a peer's AS or their customer cone.
+      </t>
+    </section>
 
-RFC 7908 <xref target="RFC7908"></xref> provides a definition of the route leak problem, and enumerates several types of route leaks. For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer. The commonly used policy is that a route received from a transit provider or a lateral peer may be forwarded "down only" to customers.
-
-</t>
-<t>
-This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak protection (RLP) information in a Border Gateway Protocol (BGP) community.  The RLP information is carried in a new well-known transitive BGP community, called the RLP community. The RLP community helps with detection and mitigation of route leaks at ASes downstream from the leaking AS (in the path of the BGP update). This is an inter-AS (multi-hop) solution mechanism. This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref>.
-</t>
-<t> 
-Previously in version 10 of this document, an optional transitive BGP RLP Attribute was proposed to carry the RLP information. However, this document proposes a well-known transitive BGP community to carry the RLP information, with the intention of promoting faster adoption. 
-</t>
-<t> 
-The inter-AS RLP mechanism described here can be incrementally deployed. Early adopters would see significant benefits. If a group of big ISPs deploy RLP, then they would be helping each other by blocking route leaks originated within one's customer cone from propagating into a peer's AS or their customer cone. 
-</t>
-	    </section> 
-
-	    <section anchor="methods" title="Mechanisms for Detection and Mitigation of Route Leaks">
+    <section anchor="methods" title="Mechanisms for Detection and Mitigation of Route Leaks">
 
 <t>
 There are two considerations for route leaks: (1) Prevention of route leaks from a local AS <xref target="I-D.ietf-idr-bgp-open-policy"></xref>, and (2) Detection and mitigation of route leaks in ASes that are downstream from the leaking AS (in the path of BGP update). This document specifies the latter.
@@ -179,7 +128,7 @@ When the BGP relationship information has been correctly exchanged including the
 </t>
 <t>
 Once the per-prefix roles are set, this information is used in the RLP solution mechanism that is described in this document.
- 
+
 </t>
 
 
@@ -194,7 +143,7 @@ This section, <xref target="receiver"></xref> and <xref target="mitigate"></xref
 -->
 
 <t>
-The key principle is that, in the event of a route leak, a receiving router in a transit-provider AS (e.g., referring to <xref target="fig1"></xref>, ISP2 (AS2) router) should be able to detect from the RLP community in the update message that its customer AS (e.g., AS3 in <xref target="fig1"></xref>) should not have forwarded the update (towards the transit-provider AS). Likewise when the update is received from a lateral peer. This means that at least one of the ASes in the AS path of the update put RLP information in RLP community to indicate that it sent the update to its customer or lateral peer, but forbade any subsequent 'Up' (customer to provider) or 'Lateral' (peer to peer) forwarding. 
+The key principle is that, in the event of a route leak, a receiving router in a transit-provider AS (e.g., referring to <xref target="fig1"></xref>, ISP2 (AS2) router) should be able to detect from the RLP community in the update message that its customer AS (e.g., AS3 in <xref target="fig1"></xref>) should not have forwarded the update (towards the transit-provider AS). Likewise when the update is received from a lateral peer. This means that at least one of the ASes in the AS path of the update put RLP information in RLP community to indicate that it sent the update to its customer or lateral peer, but forbade any subsequent 'Up' (customer to provider) or 'Lateral' (peer to peer) forwarding.
 </t>
 
 <figure align="center" anchor="fig1" title="Illustration of the basic notion of a route leak.">
@@ -229,23 +178,23 @@ The RLP information contained in the RLP community consists of one or two AS num
 Down Only (DO) indication: ASN of the most recent RLP-aware AS in the path to assert that it sent the update to a customer or lateral peer;
 </t>
 <t>
-Leak detected (L) indication: ASN of the first RLP-aware AS in the path to assert that it forwarded the route from a customer or lateral peer despite detecting a leak (to avoid unreachability). 
+Leak detected (L) indication: ASN of the first RLP-aware AS in the path to assert that it forwarded the route from a customer or lateral peer despite detecting a leak (to avoid unreachability).
 </t>
 </list>
 </t>
 <t>
-If the RLP community is present in an update, it will always contain a single DO. However, L need not be always present. (Note: The bits designated to carry L may be always present along with a DO, except that a default value (all zeros) is carried in L when no AS in the current AS path needed to assert L.) Once an AS asserts L (Leak detected) by inserting its ASN value, it MUST not be changed subsequently as the update propagates. But the ASN value in DO (Down Only) is changeable along the AS path per its definition above.      
+If the RLP community is present in an update, it will always contain a single DO. However, L need not be always present. (Note: The bits designated to carry L may be always present along with a DO, except that a default value (all zeros) is carried in L when no AS in the current AS path needed to assert L.) Once an AS asserts L (Leak detected) by inserting its ASN value, it MUST not be changed subsequently as the update propagates. But the ASN value in DO (Down Only) is changeable along the AS path per its definition above.
 </t>
 <t>
-Design assumption 1: Operators desire to avoid unreachability. So, a design assumption here is that in the absence of an alternative route, an AS may select and forward a route that is detected to be a leak. (Note: This is the reason Leak detected (L) indication is part of the design.)   
+Design assumption 1: Operators desire to avoid unreachability. So, a design assumption here is that in the absence of an alternative route, an AS may select and forward a route that is detected to be a leak. (Note: This is the reason Leak detected (L) indication is part of the design.)
 </t>
 <t>
-Design assumption 2: An AS that is RLP-aware (i.e., implements the RLP solution in this document) MUST also implement an intra-AS solution for route leak avoidance in the local AS. The latter solution uses an intra-AS signaling mechanism (see <xref target="I-D.ietf-idr-bgp-open-policy"></xref>, Section 3.7 of <xref target="RLP-Discussion"></xref>). By doing this, the AS locally prevents the leaking of routes learned from a transit provider or lateral peer to another transit provider or lateral peer. Why this is critical to the overall solution is made clear in slides 7 and 8 of <xref target="sriram2"></xref>. 
-</t>    
+Design assumption 2: An AS that is RLP-aware (i.e., implements the RLP solution in this document) MUST also implement an intra-AS solution for route leak avoidance in the local AS. The latter solution uses an intra-AS signaling mechanism (see <xref target="I-D.ietf-idr-bgp-open-policy"></xref>, Section 3.7 of <xref target="RLP-Discussion"></xref>). By doing this, the AS locally prevents the leaking of routes learned from a transit provider or lateral peer to another transit provider or lateral peer. Why this is critical to the overall solution is made clear in slides 7 and 8 of <xref target="sriram2"></xref>.
+</t>
 <section anchor="format" title="Format of the RLP Community">
 
 <t>
-The format of the RLP community using a single Large Community is shown in <xref target="fig2"></xref>.  
+The format of the RLP community using a single Large Community is shown in <xref target="fig2"></xref>.
 </t>
 <figure align="center" anchor="fig2" title="Format of the RLP Community using a Large Community [RFC8092].">
   <artwork align="left"><![CDATA[
@@ -270,23 +219,23 @@ The format of the RLP community using a single Large Community is shown in <xref
 <section anchor="receiver" title="Route Leak Detection Rules and the Ingress Router (Receiver) Actions">
 
 <t>
-A received BGP update is determined to be a route leak if: 
+A received BGP update is determined to be a route leak if:
 </t>
 <t>
 <list style="numbers">
 <t>
-if L is present in the update; 
+if L is present in the update;
 </t>
 <t>
 else (L is absent), the update is received from a customer and DO is present;
 </t>
 <t>
-else (L is absent), the update is received from a lateral peer and DO is present that is not the lateral peer's ASN. 
+else (L is absent), the update is received from a lateral peer and DO is present that is not the lateral peer's ASN.
 </t>
 </list>
 </t>
 <t>
-Note: Here by "L is present" we mean that its value is not the default value (all zeros) but is a proper ASN. Effectively "L is absent" if its value is the default value.     
+Note: Here by "L is present" we mean that its value is not the default value (all zeros) but is a proper ASN. Effectively "L is absent" if its value is the default value.
 </t>
 <t>
 In steps 2 and 3 above, the ingress router (receiver) MUST add L = local ANS. Doing this prior to the best path selection process is necessary. Also, if the route is selected as best path, then L is already set correctly before the egress router (sender) acts on it.
@@ -304,14 +253,14 @@ Generalized Minimum Default Policy: Whenever there is a choice between multiple 
 
 <section anchor="sender" title="Egress Router (Sender) Actions">
 <t>
-After best path selection has been performed, a sender MUST perform the following RLP-related actions on the update to be propagated:   
+After best path selection has been performed, a sender MUST perform the following RLP-related actions on the update to be propagated:
 </t>
 <t>
 <list style="numbers">
 <t>
 When propagating a route originated by the local AS to a customer or lateral peer, add DO = local ASN;
 </t>
-<t> 
+<t>
 Else, when propagating a route that already includes a DO (i.e., was received with a DO) to a customer or lateral peer, replace the DO value with the local ASN.
 </t>
 </list>
@@ -324,7 +273,7 @@ Else, when propagating a route that already includes a DO (i.e., was received wi
 <t>
 [Begin: receiver action for route leak detection]
 </t>
-<t> 
+<t>
 {Comment: This precedes route selection policy.}
 </t>
 <t>
@@ -342,14 +291,14 @@ else (L is absent), if route is received from a lateral peer and DO is present t
 </t>
 <t>
 {Comment: "Route does not include L" or "L is absent" only if L is either literally absent or has the default (all zeros) value.}
-</t>  
+</t>
 <t>
 [End: receiver action for route leak detection]
-</t> 
+</t>
 <t>
 ----------------------------------------------------------
-</t> 
-<t>  
+</t>
+<t>
 [Begin: route selection policy]
 </t>
 <t>
@@ -362,47 +311,47 @@ apply best path selection policy*
 </t>
 <t>
 {*Comment: E.g., best path selection based on LocalPref first and then shortest path.}
-</t> 
-<t>  
+</t>
+<t>
 [End: route selection policy]
-</t> 
+</t>
 <t>
 ----------------------------------------------------------
-</t> 
-<t> 
+</t>
+<t>
 [Begin: sender action]
-</t> 
+</t>
 <t>
 {Comment: RLP (includes DO and L or just DO) is a *transitive* BGP community and should propagate globally.}
-</t> 
+</t>
 <t>
 <list style="">
 <t>
-when propagating a route originated by local AS to a customer or lateral peer, add DO = local ASN; 
-</t> 
+when propagating a route originated by local AS to a customer or lateral peer, add DO = local ASN;
+</t>
 <t>
 when propagating a route that includes a DO (i.e., was received with a DO) to a customer or lateral peer, replace the DO value with the local ASN;
-</t> 
+</t>
 </list>
 </t>
 <t>
 [End: sender action]
-</t> 
+</t>
 </section>
 
    <section anchor="Security" title="Security Considerations">
 <t>
-With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>. However, that concern does not apply to the RLP community because it is a transitive community that must propagate as far as the update goes.   
+With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>. However, that concern does not apply to the RLP community because it is a transitive community that must propagate as far as the update goes.
 </t>
 <t>
-The proposed Route-Leak Protection (RLP) information carried in the RLP community can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path. In the future, if there is BGPsec deployment, the RLP information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>. So, the cryptographic security mechanisms in BGPsec can also secure the RLP information. The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>. 
-	</t>
-      
+The proposed Route-Leak Protection (RLP) information carried in the RLP community can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path. In the future, if there is BGPsec deployment, the RLP information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>. So, the cryptographic security mechanisms in BGPsec can also secure the RLP information. The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
+    </t>
+
     </section>
 
 
     <section anchor="IANA" title="IANA Considerations">
-<t> 
+<t>
 IANA is requested to register RLP in the well-known Large Community <xref target="RFC8092"></xref> registry (need help to clarify this). IANA is requested to allocate a new Global Administrator ID for the RLP community (Large Community) (see <xref target="fig2"></xref> in this document). Note that BGP Path Attribute value for Large Community is 32 (IANA allocated) <xref target="RFC8092"></xref>.
 </t>
 
@@ -410,7 +359,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
 
 
 
-	</middle> 
+    </middle>
 
   <!--  *****BACK MATTER ***** -->
 
@@ -443,7 +392,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
   </author>
 <date month='March' year='2012' />
 </front>
-     </reference> 
+     </reference>
 
 <reference anchor="Huston2014" target="http://labs.apnic.net/blabs/?p=520/">
         <front>
@@ -454,7 +403,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
   </author>
 <date month='September' year='2014' />
 </front>
-     </reference> 
+     </reference>
 
 <reference anchor="Toonk" target="http://www.bgpmon.net/what-caused-todays-internet-hiccup/">
         <front>
@@ -465,7 +414,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
   </author>
 <date month='August' year='2014' />
 </front>
-     </reference> 
+     </reference>
 
 <reference anchor="Toonk2015-A" target="http://www.bgpmon.net/what-caused-the-google-service-interruption/">
         <front>
@@ -487,7 +436,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
   </author>
 <date month='June' year='2015' />
 </front>
-     </reference> 
+     </reference>
 
 
 
@@ -498,11 +447,11 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           <author initials="T." surname="Paseka">
           <organization></organization>
           </author>
-          
-          
+
+
           <date month='November' year='2012' />
         </front>
-        <seriesInfo name='' value='CloudFare Blog' /> 
+        <seriesInfo name='' value='CloudFare Blog' />
       </reference>
 
 <reference anchor="Cowie2010" target="http://research.dyn.com/2010/11/chinas-18-minute-mystery/">
@@ -513,7 +462,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           </author>
      <date month='November' year='2010' />
         </front>
-        <seriesInfo name='' value='Dyn Research/Renesys Blog' /> 
+        <seriesInfo name='' value='Dyn Research/Renesys Blog' />
       </reference>
 
 
@@ -521,7 +470,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
   <reference anchor="Hiran" target="http://www3.cs.stonybrook.edu/~phillipa/papers/CTelecom.html">
         <front>
           <title>Characterizing Large-scale Routing Anomalies: A Case Study of the China Telecom Incident</title>
-          
+
 <author initials="R." surname="Hiran">
           <organization></organization>
           </author>
@@ -531,10 +480,10 @@ IANA is requested to register RLP in the well-known Large Community <xref target
 <author initials="P." surname="Gill">
           <organization></organization>
           </author>
-          
+
           <date month='March' year='2013' />
         </front>
-        <seriesInfo name='' value='PAM 2013' /> 
+        <seriesInfo name='' value='PAM 2013' />
       </reference>
 
  <reference anchor="Cowie2013" target="http://research.dyn.com/2013/11/mitm-internet-hijacking/">
@@ -543,11 +492,11 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           <author initials="J." surname="Cowie">
           <organization></organization>
           </author>
-          
-          
+
+
           <date month='November' year='2013' />
         </front>
-        <seriesInfo name='' value='Dyn Research/Renesys Blog' /> 
+        <seriesInfo name='' value='Dyn Research/Renesys Blog' />
       </reference>
 
 <reference anchor="Labovitz" target="http://www.arbornetworks.com/asert/2010/11/additional-discussion-of-the-april-china-bgp-hijack-incident/">
@@ -556,10 +505,10 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           <author initials="C." surname="Labovitz">
           <organization></organization>
           </author>
-          
+
           <date month='November' year='2010' />
         </front>
-        <seriesInfo name='' value='Arbor Networks IT Security Blog' /> 
+        <seriesInfo name='' value='Arbor Networks IT Security Blog' />
       </reference>
 
 
@@ -578,12 +527,12 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           <author initials="B." surname="Zhang">
             <organization></organization>
           </author>
-          
+
           <date month='November' year='2012' />
         </front>
-        <seriesInfo name='' value='IMC 2012, Boston, MA' /> 
+        <seriesInfo name='' value='IMC 2012, Boston, MA' />
       </reference>
-      
+
       <reference anchor="LRL" target="http://nrl.cs.arizona.edu/projects/lsrl-events-from-2003-to-2009/">
         <front>
           <title>Large Route Leaks</title>
@@ -596,10 +545,10 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           <author initials="B." surname="Zhang">
             <organization></organization>
           </author>
-          
+
           <date year='2012' />
         </front>
-        <seriesInfo name='' value='Project web page' /> 
+        <seriesInfo name='' value='Project web page' />
       </reference>
 
 
@@ -612,7 +561,7 @@ IANA is requested to register RLP in the well-known Large Community <xref target
    <date year='2014' />
 
         </front>
-        <seriesInfo name='' value='Project web page' /> 
+        <seriesInfo name='' value='Project web page' />
       </reference>
 
 
@@ -624,12 +573,12 @@ IANA is requested to register RLP in the well-known Large Community <xref target
           </author>
  <date month='October' year='2007' />
         </front>
-        <seriesInfo name='NANOG-41' value='Albuquerque, NM, USA' /> 
+        <seriesInfo name='NANOG-41' value='Albuquerque, NM, USA' />
       </reference>
 
 <reference anchor="Kapela-Pilosov" target="https://www.defcon.org/images/defcon-16/dc16-presentations/defcon-16-pilosov-kapela.pdf">
         <front>
-          <title>Stealing the Internet: An Internet-Scale 
+          <title>Stealing the Internet: An Internet-Scale
 Man in the Middle Attack</title>
           <author initials="A." surname="Pilosov">
             <organization></organization>
@@ -640,7 +589,7 @@ Man in the Middle Attack</title>
 
  <date month='August' year='2008' />
         </front>
-        <seriesInfo name='DEFCON-16' value='Las Vegas, NV, USA' /> 
+        <seriesInfo name='DEFCON-16' value='Las Vegas, NV, USA' />
       </reference>
 
 <reference anchor="Kephart" target="https://blog.thousandeyes.com/route-leak-causes-amazon-and-aws-outage">
@@ -652,7 +601,7 @@ Man in the Middle Attack</title>
 
  <date month='June' year='2015' />
         </front>
-        <seriesInfo name='' value='ThousandEyes Blog' /> 
+        <seriesInfo name='' value='ThousandEyes Blog' />
       </reference>
 
 <reference anchor="Madory" target="http://research.dyn.com/2014/09/why-the-internet-broke-today/">
@@ -664,7 +613,7 @@ Man in the Middle Attack</title>
 
  <date month='September' year='2014' />
         </front>
-        <seriesInfo name='' value='Dyn Research/Renesys Blog' /> 
+        <seriesInfo name='' value='Dyn Research/Renesys Blog' />
       </reference>
 
 <reference anchor="Zmijewski" target="http://research.dyn.com/2014/04/indonesia-hijacks-world/">
@@ -676,14 +625,14 @@ Man in the Middle Attack</title>
 
  <date month='April' year='2014' />
         </front>
-        <seriesInfo name='' value='Dyn Research/Renesys Blog' /> 
+        <seriesInfo name='' value='Dyn Research/Renesys Blog' />
       </reference>
 
 
 <reference anchor="Wijchers" target="https://ripe69.ripe.net/presentations/157-RIPE-69-Routing-WG.pdf">
         <front>
           <title>Quantitative Analysis of BGP Route Leaks </title>
-          
+
 <author initials="B." surname="Wijchers">
           <organization></organization>
           </author>
@@ -693,30 +642,30 @@ Man in the Middle Attack</title>
 
           <date month='November' year='2014' />
         </front>
-        <seriesInfo name='' value='RIPE-69' /> 
-      </reference> 
+        <seriesInfo name='' value='RIPE-69' />
+      </reference>
 
 
  <reference anchor="Giotsas" target="">
         <front>
           <title>Valley-free violation in Internet routing - Analysis based on BGP Community data</title>
-          
+
 <author initials="V." surname="Giotsas">
           <organization></organization>
           </author>
 <author initials="S." surname="Zhou">
           <organization></organization>
           </author>
-          
+
           <date month='June' year='2012' />
         </front>
-        <seriesInfo name='' value='IEEE ICC 2012' /> 
-      </reference> 
+        <seriesInfo name='' value='IEEE ICC 2012' />
+      </reference>
 
  <reference anchor="Anwar" target="http://www.cs.usc.edu/assets/007/94928.pdf">
         <front>
           <title>Investigating Interdomain Routing Policies in the Wild</title>
-          
+
 <author initials="R." surname="Anwar">
           <organization></organization>
           </author>
@@ -738,7 +687,7 @@ Man in the Middle Attack</title>
 
           <date month='October' year='2015' />
         </front>
-        <seriesInfo name='' value='ACM Internet Measurement Conference (IMC)' /> 
+        <seriesInfo name='' value='ACM Internet Measurement Conference (IMC)' />
       </reference>
 
 -->
@@ -749,7 +698,7 @@ Man in the Middle Attack</title>
   <reference anchor="Luckie" target="http://www.caida.org/~amogh/papers/asrank-IMC13.pdf">
         <front>
           <title>AS Relationships, Customer Cones, and Validation</title>
-          
+
 <author initials="M." surname="Luckie">
           <organization></organization>
           </author>
@@ -765,11 +714,11 @@ Man in the Middle Attack</title>
 <author initials="kc" surname="claffy">
           <organization></organization>
           </author>
-          
+
           <date month='October' year='2013' />
         </front>
-        <seriesInfo name='' value='IMC 2013' /> 
-      </reference> 
+        <seriesInfo name='' value='IMC 2013' />
+      </reference>
 
 <!--
 
@@ -777,7 +726,7 @@ Man in the Middle Attack</title>
         <front>
           <title>Stable Internet routing without global
 coordination</title>
-          
+
 <author initials="L." surname="Gao">
           <organization></organization>
           </author>
@@ -787,14 +736,14 @@ coordination</title>
 
           <date month='December' year='2001' />
         </front>
-        <seriesInfo name='' value='IEEE/ACM Transactions on Networking' /> 
-      </reference> 
+        <seriesInfo name='' value='IEEE/ACM Transactions on Networking' />
+      </reference>
 
 
 <reference anchor="Gill" target="https://www.cs.bu.edu/~goldbe/papers/survey.pdf">
         <front>
           <title>A Survey of Interdomain Routing Policies</title>
-          
+
 <author initials="P." surname="Gill">
           <organization></organization>
           </author>
@@ -807,42 +756,42 @@ coordination</title>
 
           <date month='January' year='2014' />
         </front>
-        <seriesInfo name='' value='ACM SIGCOMM Computer Communication Review' /> 
-      </reference> 
+        <seriesInfo name='' value='ACM SIGCOMM Computer Communication Review' />
+      </reference>
 
 -->
 
 <reference anchor="draft-dickson-sidr-route-leak-solns" target="https://tools.ietf.org/html/draft-dickson-sidr-route-leak-solns-01">
         <front>
           <title>Route Leaks -- Proposed Solutions</title>
-          
+
 <author initials="B." surname="Dickson">
           <organization></organization>
           </author>
 
           <date month='March' year='2012' />
         </front>
-<seriesInfo name='' value='IETF Internet Draft (expired)' /> 
-      </reference> 
+<seriesInfo name='' value='IETF Internet Draft (expired)' />
+      </reference>
 
 <!--
 
 <reference anchor="proceedings-sixth-ietf" target="https://www.ietf.org/proceedings/06.pdf">
         <front>
           <title>Proceedings of the April 22-24, 1987 Internet Engineering Task Force</title>
-          
+
 <author initials="P." surname="Gross">
           <organization></organization>
           </author>
-          
+
           <date month='April' year='1987' />
         </front>
-      </reference> 
+      </reference>
 
 <reference anchor="RFC1105-obsolete" target="https://tools.ietf.org/html/rfc1105">
         <front>
           <title>A Border Gateway Protocol (BGP)</title>
-          
+
 <author initials="K." surname="Lougheed">
           <organization></organization>
           </author>
@@ -852,26 +801,26 @@ coordination</title>
 
           <date month='June' year='1989' />
         </front>
-        <seriesInfo name='' value='IETF RFC (obsolete)' /> 
-      </reference> 
+        <seriesInfo name='' value='IETF RFC (obsolete)' />
+      </reference>
 
 <reference anchor="draft-kunzinger-idrp-ISO10747-01" target="https://tools.ietf.org/pdf/draft-kunzinger-idrp-ISO10747-01.pdf">
         <front>
           <title>Inter-Domain Routing Protocol (IDRP)</title>
-          
+
 <author initials="C." surname="Kunzinger">
           <organization></organization>
           </author>
 
           <date month='November' year='1994' />
         </front>
-        <seriesInfo name='' value='IETF Internet Draft (expired)' /> 
-      </reference> 
+        <seriesInfo name='' value='IETF Internet Draft (expired)' />
+      </reference>
 
 <reference anchor="NIST-800-54" target="http://csrc.nist.gov/publications/nistpubs/800-54/SP800-54.pdf">
         <front>
           <title>Border Gateway Protocol Security</title>
-          
+
 <author initials="D.R." surname="Kuhn">
           <organization></organization>
           </author>
@@ -884,15 +833,15 @@ coordination</title>
 
           <date month='July' year='2007' />
         </front>
-        <seriesInfo name='' value='NIST Special Publication 800-54' /> 
-      </reference> 
+        <seriesInfo name='' value='NIST Special Publication 800-54' />
+      </reference>
 
 
 <reference anchor="Sriram" target="https://www.ietf.org/proceedings/95/slides/slides-95-idr-13.pdf">
         <front>
           <title>Methods for Detection and Mitigation of
 BGP Route Leaks</title>
-          
+
 <author initials="K." surname="Sriram">
           <organization></organization>
           </author>
@@ -911,7 +860,7 @@ BGP Route Leaks</title>
 
           <date month='April' year='2016' />
         </front>
-        <seriesInfo name='' value='IETF-95 IDR WG Meeting' /> 
+        <seriesInfo name='' value='IETF-95 IDR WG Meeting' />
       </reference>
 
 
@@ -923,7 +872,7 @@ BGP Route Leaks</title>
           </author>
  <date month='June' year='2016' />
         </front>
-        <seriesInfo name='NANOG-47' value='Chicago, IL, USA' /> 
+        <seriesInfo name='NANOG-47' value='Chicago, IL, USA' />
       </reference>
 
 <reference anchor="Nanog-thread-June2016" target="http://mailman.nanog.org/pipermail/nanog/2016-June/thread.html#86348">
@@ -934,13 +883,13 @@ BGP Route Leaks</title>
           </author>
  <date month='June' year='2016' />
         </front>
-        <seriesInfo name='NANOG Email List - Discussion Thread' value='' /> 
+        <seriesInfo name='NANOG Email List - Discussion Thread' value='' />
       </reference>
 
 -->
 
 
-<!-- draft-sriram-idr-route-leak-solution-discussion-00 (I-D Exists) -->  
+<!-- draft-sriram-idr-route-leak-solution-discussion-00 (I-D Exists) -->
 <reference anchor="RLP-Discussion" target="https://tools.ietf.org/html/draft-sriram-idr-route-leak-solution-discussion-00">
 <front>
 <title>Design Discussion of Route Leaks Solution Methods </title>
@@ -950,33 +899,33 @@ BGP Route Leaks</title>
 <date month='July' year='2018' />
 </front>
 <seriesInfo name='Work in Progress,' value='draft-sriram-idr-route-leak-solution-discussion-00'/>
-</reference> 
+</reference>
 
 <reference anchor="streibelt" target="https://archive.psg.com//181101.imc-communities.pdf">
         <front>
           <title>BGP Communities: Even more Worms in the Routing Can</title>
-          
+
 <author initials="F." surname="Streibelt et al.">
           <organization></organization>
           </author>
 
           <date month='October' year='2018' />
         </front>
-        <seriesInfo name='' value='ACM IMC' /> 
+        <seriesInfo name='' value='ACM IMC' />
       </reference>
 
 
 <reference anchor="sriram1" target="https://datatracker.ietf.org/meeting/102/materials/slides-102-idr-sessb-route-leaks-merged-solution-00">
         <front>
           <title>Route Leaks Solution Merger of RLP and eOTC Drafts</title>
-          
+
 <author initials="K." surname="Sriram et al.">
           <organization></organization>
           </author>
 
           <date month='July' year='2018' />
         </front>
-        <seriesInfo name='' value='Presented at the IDR Working Group Meeting, IETF-102, Montreal' /> 
+        <seriesInfo name='' value='Presented at the IDR Working Group Meeting, IETF-102, Montreal' />
       </reference>
 
 
@@ -984,22 +933,22 @@ BGP Route Leaks</title>
         <front>
           <title>Solution for Route Leaks Using BGP Communities
 </title>
-          
+
 <author initials="K." surname="Sriram et al.">
           <organization></organization>
           </author>
 
           <date month='October' year='2018' />
         </front>
-        <seriesInfo name='' value='Authors Team Discussion Slides' /> 
-      </reference>  
- 
+        <seriesInfo name='' value='Authors Team Discussion Slides' />
+      </reference>
 
-       
+
+
 </references>
 
 
-<section title="Acknowledgements" numbered="no"> 
+<section title="Acknowledgements" numbered="no">
 
       <t>
 The authors wish to thank John Scudder and Susan Hares for their review and comments.
