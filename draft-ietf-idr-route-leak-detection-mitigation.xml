@@ -68,7 +68,7 @@
 
     <workgroup>IDR and SIDR</workgroup>
 
-    <keyword>BGP, BGPsec, Route Leak, Route-Leak Mitigation, BGP Security</keyword>
+    <keyword>BGP, Route Leak Detection, Route-Leak Mitigation, BGP Security</keyword>
 
     <abstract>
       <t>
@@ -78,7 +78,6 @@
         This is an inter-AS (multi-hop) solution mechanism.
         This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
       </t>
-
     </abstract>
 
   </front>
@@ -128,13 +127,7 @@ Once the per-prefix roles are set, this information is used in the RLP solution 
     </section>
 
 
-<section anchor="semantics" title="Route-Leak Protection (RLP) Semantics">
-<!--
-<t>
-This section, <xref target="receiver"></xref> and <xref target="mitigate"></xref> describe methods of detection and mitigation of route leaks in an AS downstream from the leaking AS.
-</t>
--->
-
+<section anchor="semantics" title="Route-Leak Detection and Mitigation">
 <t>
 The key principle is that, in the event of a route leak, a receiving router in a transit-provider AS (e.g., referring to <xref target="fig1"></xref>, ISP2 (AS2) router) should be able to detect from the RLP community in the update message that its customer AS (e.g., AS3 in <xref target="fig1"></xref>) should not have forwarded the update (towards the transit-provider AS). Likewise when the update is received from a lateral peer. This means that at least one of the ASes in the AS path of the update put RLP information in RLP community to indicate that it sent the update to its customer or lateral peer, but forbade any subsequent 'Up' (customer to provider) or 'Lateral' (peer to peer) forwarding.
 </t>
@@ -395,47 +388,6 @@ IANA is requested to register RLP in the well-known Large Community <xref target
         </front>
         <seriesInfo name='' value='IMC 2013' />
       </reference>
-
-<!--
-
-<reference anchor="Gao" target="http://www.cs.princeton.edu/~jrex/papers/sigmetrics00.long.pdf">
-        <front>
-          <title>Stable Internet routing without global
-coordination</title>
-
-<author initials="L." surname="Gao">
-          <organization></organization>
-          </author>
-<author initials="J." surname="Rexford">
-          <organization></organization>
-          </author>
-
-          <date month='December' year='2001' />
-        </front>
-        <seriesInfo name='' value='IEEE/ACM Transactions on Networking' />
-      </reference>
-
-
-<reference anchor="Gill" target="https://www.cs.bu.edu/~goldbe/papers/survey.pdf">
-        <front>
-          <title>A Survey of Interdomain Routing Policies</title>
-
-<author initials="P." surname="Gill">
-          <organization></organization>
-          </author>
-<author initials="M." surname="Schapira">
-          <organization></organization>
-          </author>
-<author initials="S." surname="Goldberg">
-          <organization></organization>
-          </author>
-
-          <date month='January' year='2014' />
-        </front>
-        <seriesInfo name='' value='ACM SIGCOMM Computer Communication Review' />
-      </reference>
-
--->
 
 <reference anchor="draft-dickson-sidr-route-leak-solns" target="https://tools.ietf.org/html/draft-dickson-sidr-route-leak-solns-01">
         <front>
