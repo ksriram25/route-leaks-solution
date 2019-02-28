@@ -29,9 +29,7 @@
 <?rfc subcompact="no" ?>
 
 <rfc category="std" docName="draft-ietf-idr-route-leak-detection-mitigation-11" ipr="trust200902">
-
   <front>
-
     <title abbrev="Route Leak Detection and Mitigation"> Methods for Detection and Mitigation of BGP Route Leaks </title>
 
     <author fullname="Kotikalapudi Sriram" initials="K." role="editor" surname="Sriram">
@@ -73,9 +71,8 @@
     <abstract>
       <t>
         Problem definition for route leaks and enumeration of types of route leaks are provided in RFC 7908.
-        This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak detection information in two new well-known BGP communities.
-        This communities gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
-        This is an inter-AS (multi-hop) solution mechanism.
+        This document describes a inter-AS (multi-hop) solution for detection and mitigation route leaks which is based on conveying route-leak detection information in two new well-known BGP communities: route leak detection community (RLD) and route leak notification community (RLN).
+        These communities gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
         This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
       </t>
     </abstract>
@@ -87,50 +84,41 @@
       <t>
         RFC 7908 <xref target="RFC7908"></xref> provides a definition of the route leak problem, and enumerates several types of route leaks.
         For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer.
-        The commonly used policy is that a route received from a transit provider or a lateral peer may be forwarded "down only" to customers.
+        The commonly used policy is that a route received from a transit provider or a lateral peer may be forwarded only to customers.
       </t>
       <t>
         This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak information in a Border Gateway Protocol (BGP) community.
-        These document specified two well-knwon communities for these purpose - route leak detection (RLP) and route leak notification (RLN) community.
-        The configuration policies MUST be defined according to peering relations between ISPs.
+        These document specified two well-known communities for these purpose - route leak detection (RLP) and route leak notification (RLN) community.
+        Its configuration policies MUST be defined according to peering relations between ISPs.
         If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured community configuration should implemented in code of routing software.
-     </t>
+      </t>
       <t>
         Described technique can be incrementally deployed.
-        If a group of big ISPs or/and IXes deploy proposed route marking, then they would be helping each other by blocking route leaks originated within one's customer cone from propagating into a peer's AS or their customer cone.
+        If a group of big ISPs or/and IXes deploy proposed route marking, then they would be helping each other by blocking route leaks that can happen between them.
       </t>
     </section>
 
-    <section anchor="methods" title="Mechanisms for Detection and Mitigation of Route Leaks">
-
+    <section anchor="relations" title="Peering Relationships">
       <t>
-        There are two considerations for route leaks: (1) Prevention of route leaks from a local AS <xref target="I-D.ietf-idr-bgp-open-policy"></xref>, and (2) Detection and mitigation of route leaks in ASes that are downstream from the leaking AS (in the path of BGP update).
-        This document specifies the latter.
+        As described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> there are several common peering relations foe eBGP sessions:
+        <list style="symbols">
+          <t>Provider - sender is a transit provider to neighbor;</t>
+          <t>Customer - sender is customer of neighbor;</t>
+          <t>RS - sender is route server at internet exchange point (IX)</t>
+          <t>RS-client - sender is client of RS at internet exchange point (IX)</t>
+          <t>Peer - sender and neighbor are peers;</t>
+        </list>
       </t>
-
-<section anchor="relation" title="Ascertaining Peering Relationship">
-<t>
-There are four possible peering relationships (i.e., roles) an AS can have with a neighbor AS: (1) Provider: transit-provider for all prefixes exchanged, (2) Customer: customer for all prefixes exchanged, (3) Lateral Peer: lateral peer (i.e., non-transit) for all prefixes exchanged, and (4) Complex: different relationships for different sets of prefixes <xref target="Luckie"></xref>. For the complex case, the peering role types provider, customer, or lateral peer apply for different non-overlapping sets of prefixes.
-</t>
-<t>
-Operators rely on some form of out-of-band (OOB) (i.e., external to BGP) communication to exchange information about their peering relationship, AS number, interface IP address, etc. If the relationship is complex, the OOB communication also includes the sets of prefixes for which they have different roles. <xref target="I-D.ietf-idr-bgp-open-policy"></xref> introduces a method of re-confirming the BGP Role during BGP OPEN messaging (except when the role is complex). It defines a new BGP Role capability, which helps in re-confirming the relationship when it is provider, customer, or lateral peer. BGP Role does not replace the OOB communication since it relies on the OOB communication to set the role type in the BGP OPEN message. However, BGP Role provides a means to double check, and if there is a contradiction detected via the BGP Role messages, then a Role Mismatch Notification is sent <xref target="I-D.ietf-idr-bgp-open-policy"></xref>.
-</t>
-<t>
-When the BGP relationship information has been correctly exchanged including the sets of prefixes with different roles (if complex), then this information SHOULD be used to automatically set the role per-prefix with each peer. For example, if the local AS's role is Provider with a neighbor AS, then the per-prefix role is set to 'Provider' for all prefixes sent to the neighbor, and set to 'Customer' for all prefixes received from the neighbor.
-</t>
-<t>
-Once the per-prefix roles are set, this information is used in the RLP solution mechanism that is described in this document.
-
-</t>
-
-
+      <t>
+        If the route is announced to a customer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or at IX route servers from RS-clients.
+        The described below community provide an easy way to maintain this rule.
+      </t>
     </section>
 
-
-<section anchor="semantics" title="Route-Leak Detection and Mitigation">
-<t>
+    <section anchor="semantics" title="Route-Leak Detection Community">
+      <t>
 The key principle is that, in the event of a route leak, a receiving router in a transit-provider AS (e.g., referring to <xref target="fig1"></xref>, ISP2 (AS2) router) should be able to detect from the RLP community in the update message that its customer AS (e.g., AS3 in <xref target="fig1"></xref>) should not have forwarded the update (towards the transit-provider AS). Likewise when the update is received from a lateral peer. This means that at least one of the ASes in the AS path of the update put RLP information in RLP community to indicate that it sent the update to its customer or lateral peer, but forbade any subsequent 'Up' (customer to provider) or 'Lateral' (peer to peer) forwarding.
-</t>
+      </t>
 
 <figure align="center" anchor="fig1" title="Illustration of the basic notion of a route leak.">
   <artwork align="left"><![CDATA[
