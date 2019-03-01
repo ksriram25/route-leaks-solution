@@ -115,56 +115,30 @@
       </t>
     </section>
 
-    <section anchor="semantics" title="Route-Leak Detection Community">
+    <section anchor="detection" title="Route-Leak Detection">
       <t>
-The key principle is that, in the event of a route leak, a receiving router in a transit-provider AS (e.g., referring to <xref target="fig1"></xref>, ISP2 (AS2) router) should be able to detect from the RLP community in the update message that its customer AS (e.g., AS3 in <xref target="fig1"></xref>) should not have forwarded the update (towards the transit-provider AS). Likewise when the update is received from a lateral peer. This means that at least one of the ASes in the AS path of the update put RLP information in RLP community to indicate that it sent the update to its customer or lateral peer, but forbade any subsequent 'Up' (customer to provider) or 'Lateral' (peer to peer) forwarding.
+        The RLD community MUST follow next semantics:
+        <list style="numbers">
+          <t>4200000000 - suggested class for well-known large communities;</t>
+          <t>1 - RLD subclass;</t>
+          <t>value - ASN who set the community</t>
+        </list>
+        This community MUST be set if route is announced to Customer, RS-client or Peer with a proper ASN.
+      </t>
+      <t>
+        The are two rules that enables detection route leaks:
+        <list style="symbols">
+          <t>If route with RLD set received from Customer or RS-client - it's a route leak</t>
+          <t>If route with RLD set received from Peer and RLD Values isn't equal to neighbor ASN - it's route leak</t>
+        </list>
+        This two rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
 
-<figure align="center" anchor="fig1" title="Illustration of the basic notion of a route leak.">
-  <artwork align="left"><![CDATA[
- 
-                                   /\              /\
-                                    \ route-leak(P)/
-                                     \ propagated / 
-                                      \          /  
-           +------------+    peer    +------------+
-     ______| ISP1 (AS1) |----------->|  ISP2 (AS2)|---------->
-    /       ------------+  prefix(P) +------------+ route-leak(P)
-   | prefix |          \   update      /\        \  propagated
-    \  (P)  /           \              /          \
-     -------   prefix(P) \            /            \   
-                  update  \          /              \          
-                           \        /route-leak(P)  \/
-                           \/      /
-                        +---------------+
-                        | customer(AS3) |
-                        +---------------+
+    <section anchor="mitigation" title="Route-Leak Mitigation">
+      <t>
 
-]]></artwork>
- </figure>
+      </t>
 
-<t>
-The RLP information contained in the RLP community consists of one or two AS numbers (ASNs) and has the following semantics:
-</t>
-<t>
-<list style="numbers">
-<t>
-Down Only (DO) indication: ASN of the most recent RLP-aware AS in the path to assert that it sent the update to a customer or lateral peer;
-</t>
-<t>
-Leak detected (L) indication: ASN of the first RLP-aware AS in the path to assert that it forwarded the route from a customer or lateral peer despite detecting a leak (to avoid unreachability).
-</t>
-</list>
-</t>
-<t>
-If the RLP community is present in an update, it will always contain a single DO. However, L need not be always present. (Note: The bits designated to carry L may be always present along with a DO, except that a default value (all zeros) is carried in L when no AS in the current AS path needed to assert L.) Once an AS asserts L (Leak detected) by inserting its ASN value, it MUST not be changed subsequently as the update propagates. But the ASN value in DO (Down Only) is changeable along the AS path per its definition above.
-</t>
-<t>
-Design assumption 1: Operators desire to avoid unreachability. So, a design assumption here is that in the absence of an alternative route, an AS may select and forward a route that is detected to be a leak. (Note: This is the reason Leak detected (L) indication is part of the design.)
-</t>
-<t>
-Design assumption 2: An AS that is RLP-aware (i.e., implements the RLP solution in this document) MUST also implement an intra-AS solution for route leak avoidance in the local AS. The latter solution uses an intra-AS signaling mechanism (see <xref target="I-D.ietf-idr-bgp-open-policy"></xref>, Section 3.7 of <xref target="RLP-Discussion"></xref>). By doing this, the AS locally prevents the leaking of routes learned from a transit provider or lateral peer to another transit provider or lateral peer. Why this is critical to the overall solution is made clear in slides 7 and 8 of <xref target="sriram2"></xref>.
-</t>
 <section anchor="format" title="Format of the RLP Community">
 
 <t>
@@ -389,112 +363,6 @@ IANA is requested to register RLP in the well-known Large Community <xref target
         </front>
 <seriesInfo name='' value='IETF Internet Draft (expired)' />
       </reference>
-
-<!-- draft-sriram-idr-route-leak-solution-discussion-00 (I-D Exists) -->
-<reference anchor="RLP-Discussion" target="https://tools.ietf.org/html/draft-sriram-idr-route-leak-solution-discussion-00">
-<front>
-<title>Design Discussion of Route Leaks Solution Methods </title>
-<author initials='K' surname='Sriram (Ed.)' fullname='Kotikalapudi Sriram'>
-    <organization />
-</author>
-<date month='July' year='2018' />
-</front>
-<seriesInfo name='Work in Progress,' value='draft-sriram-idr-route-leak-solution-discussion-00'/>
-</reference>
-
-<reference anchor="streibelt" target="https://archive.psg.com//181101.imc-communities.pdf">
-        <front>
-          <title>BGP Communities: Even more Worms in the Routing Can</title>
-
-<author initials="F." surname="Streibelt et al.">
-          <organization></organization>
-          </author>
-
-          <date month='October' year='2018' />
-        </front>
-        <seriesInfo name='' value='ACM IMC' />
-      </reference>
-
-
-<reference anchor="sriram1" target="https://datatracker.ietf.org/meeting/102/materials/slides-102-idr-sessb-route-leaks-merged-solution-00">
-        <front>
-          <title>Route Leaks Solution Merger of RLP and eOTC Drafts</title>
-
-<author initials="K." surname="Sriram et al.">
-          <organization></organization>
-          </author>
-
-          <date month='July' year='2018' />
-        </front>
-        <seriesInfo name='' value='Presented at the IDR Working Group Meeting, IETF-102, Montreal' />
-      </reference>
-
-
-<reference anchor="sriram2" target="https://www.nist.gov/sites/default/files/documents/2018/10/22/rlp_using_bgp_community-v4.pdf">
-        <front>
-          <title>Solution for Route Leaks Using BGP Communities
-</title>
-
-<author initials="K." surname="Sriram et al.">
-          <organization></organization>
-          </author>
-
-          <date month='October' year='2018' />
-        </front>
-        <seriesInfo name='' value='Authors Team Discussion Slides' />
-      </reference>
-
-
-
-</references>
-
-
-<section title="Acknowledgements" numbered="no">
-
-      <t>
-The authors wish to thank John Scudder and Susan Hares for their review and comments.
-</t>
-
-    </section>
-
-<section title="Contributors" numbered="no">
-
-<t>
-The following people made significant contributions to this document and
-should be considered co-authors:
-</t>
-
-<figure><artwork><![CDATA[
-
-Brian Dickson
-Independent
-Email: brian.peter.dickson@gmail.com
-
-Doug Montgomery
-USA National Institute of Standards and Technology
-Email: dougm@nist.gov
-
-Keyur Patel
-Arrcus
-Email: keyur@arrcus.com
-
-Andrei Robachevsky
-Internet Society
-Email: robachevsky@isoc.org
-
-Eugene Bogomazov
-Qrator Labs
-Email: eb@qrator.net
-
-Randy Bush
-Internet Initiative Japan
-Email: randy@psg.com
-
-]]></artwork></figure>
-
-</section>
-
-</back>
-
+    </references>
+  </back>
 </rfc>
-
