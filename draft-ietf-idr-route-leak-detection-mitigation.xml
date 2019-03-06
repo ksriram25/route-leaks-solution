@@ -115,7 +115,7 @@
       </t>
     </section>
 
-    <section anchor="detection" title="Route-Leak Detection using Communities">
+    <section anchor="detection" title="Route-Leak Detection Community">
       <t>
         The RLD community MUST follow next semantics:
         <list style="numbers">
@@ -135,7 +135,7 @@
       </t>
     </section>
 
-    <section anchor="notification" title="Route-Leak Notification">
+    <section anchor="notification" title="Route-Leak Notification Community">
       <t>
         In the previous section was described as a method to detect route leaks.
         In this section will be discussed different options what ISP SHOULD do if route leak is detected.
@@ -168,11 +168,29 @@
       </t>
 
       <t>
-        With its help we have next definition of route leaks mitigation:
+        To avoid possible stable oscillations each leaked prefix MUST be marked with RLN community.
+        If prefix is marked with RLN community - it MUST be treated as route leak.
+        This rule complements detection measures via RLD community described in previous session.
+      </t>
+
+    </section>
+
+    <section anchor="mitigation" title="Route-Leak Notification Mitigation">
+      <t>
+        In previous were described ways to detect route leaks using RLD and RLN communities.
+        In this section will be presented suggested method for route leak mitigation.
+      </t>
+
+      <t>
+
         <list style="symbols">
-          <t>If leaked prefix is received </t>
-          <t>If route with RLD set received from Peer and RLD Values isn't equal to neighbor ASN - it's route leak</t>
+          <t>If leaked prefix is learned from Customer it MUST be deprioritized</t>
+          <t>If leaked prefix is learned from Peer is MUST be deprioritized</t>
+          <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
+          <t>IF leaked prefix is learned from Provider MUST be rejected</t>
+          <t>IF leaked prefix is learned from RS MUST be rejected</t>
         </list>
+
       </t>
     </section>
 
@@ -194,66 +212,48 @@ The proposed Route-Leak Protection (RLP) information carried in the RLP communit
 <t>
 IANA is requested to register RLP in the well-known Large Community <xref target="RFC8092"></xref> registry (need help to clarify this). IANA is requested to allocate a new Global Administrator ID for the RLP community (Large Community) (see <xref target="fig2"></xref> in this document). Note that BGP Path Attribute value for Large Community is 32 (IANA allocated) <xref target="RFC8092"></xref>.
 </t>
-
     </section>
 
 
 
-    </middle>
-
-  <!--  *****BACK MATTER ***** -->
+  </middle>
 
   <back>
 
- <references title="Normative References">
-&RFC4271;
- </references>
+    <references title="Normative References">
+      &RFC4271;
+    </references>
 
     <references title="Informative References">
-&RFC6811;
-&RFC7454;
-&RFC7908;
-&RFC8092;
-&RFC8205;
+      &RFC6811;
+      &RFC7454;
+      &RFC7908;
+      &RFC8092;
+      &RFC8205;
 
+      &I-D.ietf-idr-bgp-open-policy;
 
-&I-D.ietf-idr-bgp-open-policy;
       <reference anchor="Luckie" target="http://www.caida.org/~amogh/papers/asrank-IMC13.pdf">
         <front>
           <title>AS Relationships, Customer Cones, and Validation</title>
 
-<author initials="M." surname="Luckie">
-          <organization></organization>
-          </author>
-<author initials="B." surname="Huffaker">
-          <organization></organization>
-          </author>
-<author initials="A." surname="Dhamdhere">
-          <organization></organization>
-          </author>
-<author initials="V." surname="Giotsas">
-          <organization></organization>
-          </author>
-<author initials="kc" surname="claffy">
-          <organization></organization>
-          </author>
-
+            <author initials="M." surname="Luckie"/>
+            <author initials="B." surname="Huffaker"/>
+            <author initials="A." surname="Dhamdhere"/>
+            <author initials="V." surname="Giotsas"/>
+            <author initials="kc" surname="claffy"/>
           <date month='October' year='2013' />
         </front>
         <seriesInfo name='' value='IMC 2013' />
       </reference>
 
-<reference anchor="draft-dickson-sidr-route-leak-solns" target="https://tools.ietf.org/html/draft-dickson-sidr-route-leak-solns-01">
+      <reference anchor="draft-dickson-sidr-route-leak-solns" target="https://tools.ietf.org/html/draft-dickson-sidr-route-leak-solns-01">
         <front>
           <title>Route Leaks -- Proposed Solutions</title>
-
-<author initials="B." surname="Dickson">
-          <organization></organization>
-          </author>
-
+          <author initials="B." surname="Dickson"/>
           <date month='March' year='2012' />
         </front>
-<seriesInfo name='' value='IETF Internet Draft (expired)' />
+        <seriesInfo name='' value='IETF Internet Draft (expired)' />
       </reference>
     </references>
   </back>
