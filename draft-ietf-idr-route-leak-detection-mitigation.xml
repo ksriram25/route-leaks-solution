@@ -115,15 +115,15 @@
       </t>
     </section>
 
-    <section anchor="detection" title="Route-Leak Detection">
+    <section anchor="detection" title="Route-Leak Detection using Communities">
       <t>
         The RLD community MUST follow next semantics:
         <list style="numbers">
           <t>4200000000 - suggested class for well-known large communities;</t>
-          <t>1 - RLD subclass;</t>
+          <t>2 - RLD subclass;</t>
           <t>value - ASN who set the community</t>
         </list>
-        This community MUST be set if route is announced to Customer, RS-client or Peer with a proper ASN.
+        This community MUST be set if route is announced to Customer, RS-client or Peer with a proper ASN value.
       </t>
       <t>
         The are two rules that enables detection route leaks:
@@ -133,159 +133,51 @@
         </list>
         This two rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
+    </section>
 
-    <section anchor="mitigation" title="Route-Leak Mitigation">
+    <section anchor="notification" title="Route-Leak Notification">
       <t>
-
+        In the previous section was described as a method to detect route leaks.
+        In this section will be discussed different options what ISP SHOULD do if route leak is detected.
+        The straightforward way is to reject leaked routes.
+        But such filtering strategy might have side-effects.
       </t>
 
-<section anchor="format" title="Format of the RLP Community">
+      <t>
+        If prefix has a single path to Tier1 providers its whole connectivity depends on this path existence.
+        And if this path is leaked, and rejected afterwards by transit ISP, including Tier1, it will make this prefix partially unavailable.
+        So, in this case victim may experience DoS because of mistake of third party.
+        We found that more then 100k prefixes (about 15% of all prefixes in the today full view table) have single path and thus can be affected.
+        The deprioritization is a soft way to stop route leak propagation that solves the problem of possible outages.
+      </t>
 
-<t>
-The format of the RLP community using a single Large Community is shown in <xref target="fig2"></xref>.
-</t>
-<figure align="center" anchor="fig2" title="Format of the RLP Community using a Large Community [RFC8092].">
-  <artwork align="left"><![CDATA[
+      <t>
+        But propagation of leaked should be also done with caution.
+        When the prefix is received from customer RLD community can't be used to tell if the route was leaked or not.
+        And if it was leaked it may result in BGP wedges scenario or even create a stable oscillation with dynamic BGP loops.
+      </t>
 
- 0                   1                   2                   3
- 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|       Global Administrator  (IANA assigned for RLP)           |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            Local Data Part 1 = DO (ASN value)                 |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            Local Data Part 2 = L (ASN value)                  |
-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+      <t>
+        To address this issue we introduce another well-known BGP community Route Leak Notification (RLN).
+        It has next semantics:
+        <list style="numbers">
+          <t>4200000000 - suggested class for well-known large communities;</t>
+          <t>2 - RLN subclass;</t>
+          <t>value - ASN who set the community</t>
+        </list>
+      </t>
 
-]]></artwork>
- </figure>
+      <t>
+        With its help we have next definition of route leaks mitigation:
+        <list style="symbols">
+          <t>If leaked prefix is received </t>
+          <t>If route with RLD set received from Peer and RLD Values isn't equal to neighbor ASN - it's route leak</t>
+        </list>
+      </t>
+    </section>
 
 
 
-</section>
-</section>
-<section anchor="receiver" title="Route Leak Detection Rules and the Ingress Router (Receiver) Actions">
-
-<t>
-A received BGP update is determined to be a route leak if:
-</t>
-<t>
-<list style="numbers">
-<t>
-if L is present in the update;
-</t>
-<t>
-else (L is absent), the update is received from a customer and DO is present;
-</t>
-<t>
-else (L is absent), the update is received from a lateral peer and DO is present that is not the lateral peer's ASN.
-</t>
-</list>
-</t>
-<t>
-Note: Here by "L is present" we mean that its value is not the default value (all zeros) but is a proper ASN. Effectively "L is absent" if its value is the default value.
-</t>
-<t>
-In steps 2 and 3 above, the ingress router (receiver) MUST add L = local ANS. Doing this prior to the best path selection process is necessary. Also, if the route is selected as best path, then L is already set correctly before the egress router (sender) acts on it.
-</t>
-
-</section>
-<section anchor="decision" title="Route Selection Policy">
-<t>
-Minimum Default Policy: Whenever there is a choice between a customer route and a provider route that are both detected to be leaks (L is present), then lower the LocalPref to X (TBD by operator) for each of them. Then shortest path criterion would typically make the customer route preferred. (Note: This would help mitigate any possibility of persistent oscillation; see slide #7 in <xref target="sriram1"></xref>.)
-</t>
-<t>
-Generalized Minimum Default Policy: Whenever there is a choice between multiple routes (customer/peer/provider) and each is detected to be a leak (L is present), then lower the LocalPref to X TBD by operator) for each of them. Then apply shortest path criterion. (Note: Some network operators may find this inadequate; see scenarios #3 and #6 in slides #14 and #16, respectively, in <xref target="sriram2"></xref>. But they may locally modify their policy while respecting the basic principle.)
-</t>
-</section>
-
-<section anchor="sender" title="Egress Router (Sender) Actions">
-<t>
-After best path selection has been performed, a sender MUST perform the following RLP-related actions on the update to be propagated:
-</t>
-<t>
-<list style="numbers">
-<t>
-When propagating a route originated by the local AS to a customer or lateral peer, add DO = local ASN;
-</t>
-<t>
-Else, when propagating a route that already includes a DO (i.e., was received with a DO) to a customer or lateral peer, replace the DO value with the local ASN.
-</t>
-</list>
-</t>
-</section>
-</section>
-
-<section anchor="pseudo" title="Pseudo Code">
-
-<t>
-[Begin: receiver action for route leak detection]
-</t>
-<t>
-{Comment: This precedes route selection policy.}
-</t>
-<t>
-<list style="">
-<t>
-if received route includes L, then save the route in RIB-in as is;
-</t>
-<t>
-else (L is absent), if route is received from a customer and DO is preset, then add L = local ASN;
-</t>
-<t>
-else (L is absent), if route is received from a lateral peer and DO is present that is not the lateral peer's ASN, then add L = local ASN
-</t>
-</list>
-</t>
-<t>
-{Comment: "Route does not include L" or "L is absent" only if L is either literally absent or has the default (all zeros) value.}
-</t>
-<t>
-[End: receiver action for route leak detection]
-</t>
-<t>
-----------------------------------------------------------
-</t>
-<t>
-[Begin: route selection policy]
-</t>
-<t>
-<list style="">
-<t>
-for each route that includes L, lower the LocalPref to X (TBD);
-apply best path selection policy*
-</t>
-</list>
-</t>
-<t>
-{*Comment: E.g., best path selection based on LocalPref first and then shortest path.}
-</t>
-<t>
-[End: route selection policy]
-</t>
-<t>
-----------------------------------------------------------
-</t>
-<t>
-[Begin: sender action]
-</t>
-<t>
-{Comment: RLP (includes DO and L or just DO) is a *transitive* BGP community and should propagate globally.}
-</t>
-<t>
-<list style="">
-<t>
-when propagating a route originated by local AS to a customer or lateral peer, add DO = local ASN;
-</t>
-<t>
-when propagating a route that includes a DO (i.e., was received with a DO) to a customer or lateral peer, replace the DO value with the local ASN;
-</t>
-</list>
-</t>
-<t>
-[End: sender action]
-</t>
-</section>
 
    <section anchor="Security" title="Security Considerations">
 <t>
