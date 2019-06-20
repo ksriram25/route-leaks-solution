@@ -90,7 +90,7 @@
         This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak information in a Border Gateway Protocol (BGP) community.
         These document specified two well-known communities for these purpose - route leak detection (RLP) and route leak notification (RLN) community.
         Its configuration policies MUST be defined according to peering relations between ISPs.
-        If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured community configuration should implemented in code of routing software.
+        If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured, community configuration SHOULD be implemented in code of routing software.
       </t>
       <t>
         Described technique can be incrementally deployed.
@@ -100,7 +100,7 @@
 
     <section anchor="relations" title="Peering Relationships">
       <t>
-        As described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> there are several common peering relations foe eBGP sessions:
+        As described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> there are several common peering relations between eBGP sessions:
         <list style="symbols">
           <t>Provider - sender is a transit provider to neighbor;</t>
           <t>Customer - sender is customer of neighbor;</t>
@@ -126,10 +126,11 @@
         This community MUST be set if route is announced to Customer, RS-client or Peer with a proper ASN value.
       </t>
       <t>
-        The are two rules that enables detection route leaks:
+        The are three rules that enables detection route leaks:
         <list style="symbols">
           <t>If route with RLD set received from Customer or RS-client - it's a route leak</t>
           <t>If route with RLD set received from Peer and RLD Values isn't equal to neighbor ASN - it's route leak</t>
+          <t>If route with RLN set received from any eBGP session (see bellow) - it's a route leak</t>
         </list>
         This two rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
@@ -153,7 +154,7 @@
 
       <t>
         But propagation of leaked should be also done with caution.
-        When the prefix is received from customer RLD community can't be used to tell if the route was leaked or not.
+        When the prefix is received from provider RLD community can't be used to tell if the route was leaked or not.
         And if it was leaked it may result in BGP wedges scenario or even create a stable oscillation with dynamic BGP loops.
       </t>
 
@@ -182,40 +183,36 @@
       </t>
 
       <t>
-
         <list style="symbols">
-          <t>If leaked prefix is learned from Customer it MUST be deprioritized</t>
-          <t>If leaked prefix is learned from Peer is MUST be deprioritized</t>
           <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
-          <t>IF leaked prefix is learned from Provider MUST be rejected</t>
-          <t>IF leaked prefix is learned from RS MUST be rejected</t>
+          <t>If leaked prefix is learned from Peer, Provider or RS and network has default route it MUST be rejected</t>
+          <t>Otherwise leaked prefix MUST be deprioritized</t>
         </list>
-
+        The deprioritization MUST be made using local preference attribute, the suggested value is 0.
       </t>
     </section>
 
-
-
-
-   <section anchor="Security" title="Security Considerations">
-<t>
-With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>. However, that concern does not apply to the RLP community because it is a transitive community that must propagate as far as the update goes.
-</t>
-<t>
-The proposed Route-Leak Protection (RLP) information carried in the RLP community can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path. In the future, if there is BGPsec deployment, the RLP information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>. So, the cryptographic security mechanisms in BGPsec can also secure the RLP information. The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
-    </t>
+    <section anchor="Security" title="Security Considerations">
+      <t>
+        With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>.
+        However, that concern does not apply to the RLD and RLN communities because it is a transitive community that must propagate as far as the update goes.
+      </t>
+      <t>
+        The proposed ruote leak information carried in the RLD and RLN communities can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
+        In the future, if there is BGPsec deployment, the RLP and RLN information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>.
+        So, the cryptographic security mechanisms in BGPsec can also secure the route leak detection information.
+        The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
+      </t>
 
     </section>
 
 
     <section anchor="IANA" title="IANA Considerations">
-<t>
-IANA is requested to register RLP in the well-known Large Community <xref target="RFC8092"></xref> registry (need help to clarify this). IANA is requested to allocate a new Global Administrator ID for the RLP community (Large Community) (see <xref target="fig2"></xref> in this document). Note that BGP Path Attribute value for Large Community is 32 (IANA allocated) <xref target="RFC8092"></xref>.
-</t>
+      <t>
+        The draft suggests to reserve Global Administrator ID 4200000000 for well-known large community registry.
+        IANA is requested to register RLN and RLD in the well-known large community <xref target="RFC8092"></xref> registry.
+      </t>
     </section>
-
-
-
   </middle>
 
   <back>
