@@ -2,9 +2,6 @@
 
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd" [
 
-<!ENTITY RFC4271 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4271.xml">
-<!ENTITY RFC6811 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.6811.xml">
-<!ENTITY RFC7454 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7454.xml">
 <!ENTITY RFC7908 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7908.xml">
 <!ENTITY RFC8092 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8092.xml">
 <!ENTITY RFC8205 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8205.xml">
@@ -217,40 +214,25 @@
 
   <back>
 
-    <references title="Normative References">
-      &RFC4271;
-    </references>
 
     <references title="Informative References">
-      &RFC6811;
-      &RFC7454;
       &RFC7908;
       &RFC8092;
       &RFC8205;
 
       &I-D.ietf-idr-bgp-open-policy;
 
-      <reference anchor="Luckie" target="http://www.caida.org/~amogh/papers/asrank-IMC13.pdf">
+      <reference anchor="streibelt" target="https://archive.psg.com//181101.imc-communities.pdf">
         <front>
-          <title>AS Relationships, Customer Cones, and Validation</title>
+          <title>BGP Communities: Even more Worms in the Routing Can</title>
 
-            <author initials="M." surname="Luckie"/>
-            <author initials="B." surname="Huffaker"/>
-            <author initials="A." surname="Dhamdhere"/>
-            <author initials="V." surname="Giotsas"/>
-            <author initials="kc" surname="claffy"/>
-          <date month='October' year='2013' />
-        </front>
-        <seriesInfo name='' value='IMC 2013' />
-      </reference>
+        <author initials="F." surname="Streibelt et al.">
+        <organization></organization>
+        </author>
 
-      <reference anchor="draft-dickson-sidr-route-leak-solns" target="https://tools.ietf.org/html/draft-dickson-sidr-route-leak-solns-01">
-        <front>
-          <title>Route Leaks -- Proposed Solutions</title>
-          <author initials="B." surname="Dickson"/>
-          <date month='March' year='2012' />
+        <date month='October' year='2018' />
         </front>
-        <seriesInfo name='' value='IETF Internet Draft (expired)' />
+        <seriesInfo name='' value='ACM IMC' />
       </reference>
     </references>
   </back>
