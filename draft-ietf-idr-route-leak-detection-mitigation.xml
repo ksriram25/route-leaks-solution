@@ -25,7 +25,7 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 
-<rfc category="std" docName="draft-ietf-idr-route-leak-detection-mitigation-11" ipr="trust200902">
+<rfc category="std" docName="draft-ietf-grow-route-leak-detection-mitigation-02" ipr="trust200902">
   <front>
     <title abbrev="Route Leak Detection and Mitigation"> Methods for Detection and Mitigation of BGP Route Leaks </title>
 
