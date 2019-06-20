@@ -235,5 +235,46 @@
         <seriesInfo name='' value='ACM IMC' />
       </reference>
     </references>
+
+    <section title="Acknowledgements" numbered="no">
+      <t>
+        The authors wish to thank John Scudder, Susan Hares, Ruediger Volk, Mat Ford, Greg Skinner for their review and comments.
+      </t>
+    </section>
+
+    <section title="Contributors" numbered="no">
+      <t>
+        The following people made significant contributions to this document and should be considered co-authors:
+      </t>
+
+      <figure><artwork><![CDATA[
+Brian Dickson
+Independent
+Email: brian.peter.dickson@gmail.com
+
+Doug Montgomery
+USA National Institute of Standards and Technology
+Email: dougm@nist.gov
+
+Keyur Patel
+Arrcus
+Email: keyur@arrcus.com
+
+Andrei Robachevsky
+Internet Society
+Email: robachevsky@isoc.org
+
+Eugene Bogomazov
+Qrator Labs
+Email: eb@qrator.net
+
+Randy Bush
+Internet Initiative Japan
+Email: randy@psg.com
+      ]]></artwork></figure>
+    </section>
+
   </back>
 </rfc>
+
+
