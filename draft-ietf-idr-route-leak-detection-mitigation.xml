@@ -126,10 +126,10 @@
         The are three rules that enables detection route leaks:
         <list style="symbols">
           <t>If route with RLD set received from Customer or RS-client - it's a route leak</t>
-          <t>If route with RLD set received from Peer and RLD Values isn't equal to neighbor ASN - it's route leak</t>
+          <t>If route with RLD set received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak</t>
           <t>If route with RLN set received from any eBGP session (see bellow) - it's a route leak</t>
         </list>
-        This two rules provide an easy way to detect policy violation at the per-prefix granularity.
+        This three rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
     </section>
 
@@ -183,9 +183,9 @@
         <list style="symbols">
           <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
           <t>If leaked prefix is learned from Peer, Provider or RS and network has default route it MUST be rejected</t>
-          <t>Otherwise leaked prefix MUST be deprioritized</t>
+          <t>Otherwise LOCALE PREF MUST be be set to 0 RLN community MUST be added</t>
         </list>
-        The deprioritization MUST be made using local preference attribute, the suggested value is 0.
+        A prefix with RLN community set MUST not be announced to Providers, Peers or RS.
       </t>
     </section>
 
