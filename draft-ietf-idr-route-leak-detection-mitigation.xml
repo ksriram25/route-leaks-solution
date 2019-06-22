@@ -112,13 +112,34 @@
       </t>
     </section>
 
-    <section anchor="community" title="Community vs Attribute">
+    <section anchor="community" title="Communities vs Attribute">
       <t>
-        
+        In this section will be discussed the advantages and disadvantages of communities and BGP path attributes for the purpose of route leak detection.
       </t>
 
       <t>
+        The transit path attributes seem to be a native way to implement route leak detection signals.
+        The way BGP process unknown transit attributes guarantees that such a signal will pass through outdated BGP implementations without any change.
+        The main disadvantage lays on a fact that such deployment will require a software update which will postpone wide adoption for years.
+      </t>
 
+      <t>
+        In opposite, communities doesn't require software update to be deployed.
+        The main disadvantage of communities is that its usage is highly overloaded.
+        They already have multiple use cases: different types of route marking, route policy control, blackholing and etc.
+        That's why a significant number of networks with purpose or accidentally are removing communities on receipt, even well-known ones.
+      </t>
+
+      <t>
+        With the knowledge that route leaks can disrupt Internet connectivity in the region or even globally the authors believe that it's better to move forward with route leak detection using communities.
+        To nevilate listed disadvantages of community usage, we suggest using large communities, which have much higher capacity, so it should be less overloaded.
+        We suggest reserving 4200000000 class for the purpose of transit well-known communities that MUST not be stripped on both ingress and egress filters.
+        Also, policy violation is itself result of absent or improper community configuration. So, the chance that route-leak-detection community will pass through ISP that already has configuration mistakes is highly increased.
+      </t>
+
+      <t>
+        While it's not part of this document the described bellow signals can be easily translated into BGP path attributes.
+        The authors suggest to evaluate the effectiveness of leak detection using communities, and if needed implement signals via attributes too.
       </t>
     </section>
 
@@ -137,7 +158,7 @@
         <list style="symbols">
           <t>If route with RLD community set is received from Customer or RS-client - it's a route leak</t>
           <t>If route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak</t>
-          <t>If route with RLN community set is received from any eBGP session (see bellow) - it's a route leak</t>
+          <t>If route with RLN (see bellow) community set is received from any eBGP session - it's a route leak</t>
         </list>
         This three rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
@@ -145,7 +166,7 @@
 
     <section anchor="notification" title="Route-Leak Notification Community">
       <t>
-        In the previous section was described as a method to detect route leaks.
+        In the previous section was described a method to detect route leaks using RLN community.
         In this section will be discussed different options what ISP SHOULD do if route leak is detected.
         The straightforward way is to reject leaked routes.
         But such filtering strategy might have side-effects.
@@ -178,7 +199,7 @@
 
     <section anchor="mitigation" title="Route-Leak Notification Mitigation">
       <t>
-        In previous were described ways to detect route leaks using RLD and RLN communities.
+        In previous sections were described ways to detect route leaks using RLD and RLN communities.
         In this section will be presented suggested method for route leak mitigation.
       </t>
 
@@ -186,9 +207,9 @@
         <list style="symbols">
           <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
           <t>If leaked prefix is learned from Peer, Provider or RS and network has default route it MUST be rejected</t>
-          <t>Otherwise LOCALE PREF MUST be be set to 0 and RLN community MUST be added</t>
+          <t>Otherwise LOCALE PREF value MUST be be set to 0 and RLN community MUST be added</t>
         </list>
-        This rule complements detection measures via RLD community described in previous section.
+        These rules complements detection measures via RLD community described in previous section.
       </t>
     </section>
 
@@ -216,8 +237,6 @@
   </middle>
 
   <back>
-
-
     <references title="Informative References">
       &RFC7908;
       &RFC8092;
