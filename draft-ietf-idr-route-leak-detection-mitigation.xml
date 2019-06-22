@@ -107,8 +107,18 @@
         </list>
       </t>
       <t>
-        If the route is announced to a customer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or at IX route servers from RS-clients.
-        The described below community provide an easy way to maintain this rule.
+        If the route is announced to a customer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or received by IX route server.
+        So, we need a transit signal that will tell a remote ISP that receiving prefix violates 'only down' rule and thus providing a way to stop the propagation of leaked prefixes.
+      </t>
+    </section>
+
+    <section anchor="community" title="Community vs Attribute">
+      <t>
+        
+      </t>
+
+      <t>
+
       </t>
     </section>
 
@@ -116,18 +126,18 @@
       <t>
         The RLD community MUST follow next semantics:
         <list style="numbers">
-          <t>4200000000 - suggested class for well-known large communities;</t>
-          <t>2 - RLD subclass;</t>
+          <t>4200000000 - suggested class for well-known transit large communities;</t>
+          <t>1 - RLD subclass;</t>
           <t>value - ASN who set the community</t>
         </list>
-        This community MUST be set if route is announced to Customer, RS-client or Peer with a proper ASN value.
+        This community MUST be set if route is announced to Customer, RS-client or Peer with ASN value equal to sender.
       </t>
       <t>
-        The are three rules that enables detection route leaks:
+        The are three rules that enable detection of route leaks:
         <list style="symbols">
-          <t>If route with RLD set received from Customer or RS-client - it's a route leak</t>
-          <t>If route with RLD set received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak</t>
-          <t>If route with RLN set received from any eBGP session (see bellow) - it's a route leak</t>
+          <t>If route with RLD community set is received from Customer or RS-client - it's a route leak</t>
+          <t>If route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak</t>
+          <t>If route with RLN community set is received from any eBGP session (see bellow) - it's a route leak</t>
         </list>
         This three rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
@@ -142,10 +152,10 @@
       </t>
 
       <t>
-        If prefix has a single path to Tier1 providers its whole connectivity depends on this path existence.
-        And if this path is leaked, and rejected afterwards by transit ISP, including Tier1, it will make this prefix partially unavailable.
-        So, in this case victim may experience DoS because of mistake of third party.
-        We found that more then 100k prefixes (about 15% of all prefixes in the today full view table) have single path and thus can be affected.
+        If the prefix has a single path to Tier1 providers its whole connectivity depends on this path existence.
+        And if this path is leaked, and rejected afterward by transit ISP, including Tier1, it will make this prefix partially unavailable.
+        So, in this case, the victim may experience DoS because of the mistake of the third party.
+        We found that more than connectivity of 100 thousand of prefixes (about 15% of all prefixes in the today full view table) relies on a single from origin to Tier1 path and thus can be affected.
         The deprioritization is a soft way to stop route leak propagation that solves the problem of possible outages.
       </t>
 
@@ -164,13 +174,6 @@
           <t>value - ASN who set the community</t>
         </list>
       </t>
-
-      <t>
-        To avoid possible stable oscillations each leaked prefix MUST be marked with RLN community.
-        If prefix is marked with RLN community - it MUST be treated as route leak.
-        This rule complements detection measures via RLD community described in previous session.
-      </t>
-
     </section>
 
     <section anchor="mitigation" title="Route-Leak Notification Mitigation">
@@ -183,9 +186,9 @@
         <list style="symbols">
           <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
           <t>If leaked prefix is learned from Peer, Provider or RS and network has default route it MUST be rejected</t>
-          <t>Otherwise LOCALE PREF MUST be be set to 0 RLN community MUST be added</t>
+          <t>Otherwise LOCALE PREF MUST be be set to 0 and RLN community MUST be added</t>
         </list>
-        A prefix with RLN community set MUST not be announced to Providers, Peers or RS.
+        This rule complements detection measures via RLD community described in previous section.
       </t>
     </section>
 
@@ -195,7 +198,7 @@
         However, that concern does not apply to the RLD and RLN communities because it is a transitive community that must propagate as far as the update goes.
       </t>
       <t>
-        The proposed ruote leak information carried in the RLD and RLN communities can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
+        The proposed route leak information carried in the RLD and RLN communities can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
         In the future, if there is BGPsec deployment, the RLP and RLN information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>.
         So, the cryptographic security mechanisms in BGPsec can also secure the route leak detection information.
         The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
@@ -206,7 +209,7 @@
 
     <section anchor="IANA" title="IANA Considerations">
       <t>
-        The draft suggests to reserve Global Administrator ID 4200000000 for well-known large community registry.
+        The draft suggests to reserve Global Administrator ID 4200000000 for transit well-known large community registry.
         IANA is requested to register RLN and RLD in the well-known large community <xref target="RFC8092"></xref> registry.
       </t>
     </section>
