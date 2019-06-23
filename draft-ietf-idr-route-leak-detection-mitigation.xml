@@ -107,7 +107,7 @@
         </list>
       </t>
       <t>
-        If the route is announced to a customer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or received by IX route server.
+        If the route is announced to a customer, peer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or received by IX route server.
         So, we need a transit signal that will tell a remote ISP that receiving prefix violates 'only down' rule and thus providing a way to stop the propagation of leaked prefixes.
       </t>
     </section>
@@ -124,7 +124,7 @@
       </t>
 
       <t>
-        In opposite, communities doesn't require software update to be deployed.
+        In opposite, communities doesn't require software update.
         The main disadvantage of communities is that its usage is highly overloaded.
         They already have multiple use cases: different types of route marking, route policy control, blackholing and etc.
         That's why a significant number of networks with purpose or accidentally are removing communities on receipt, even well-known ones.
@@ -132,9 +132,14 @@
 
       <t>
         With the knowledge that route leaks can disrupt Internet connectivity in the region or even globally the authors believe that it's better to move forward with route leak detection using communities.
+        It's no a theoretical threat - it's constantly happening events.
+      </t>
+
+      <t>
         To nevilate listed disadvantages of community usage, we suggest using large communities, which have much higher capacity, so it should be less overloaded.
         We suggest reserving 4200000000 class for the purpose of transit well-known communities that MUST not be stripped on both ingress and egress filters.
-        Also, policy violation is itself result of absent or improper community configuration. So, the chance that route-leak-detection community will pass through ISP that already has configuration mistakes is highly increased.
+        Also, policy violation is itself result of absent or improper community configuration.
+        So, the chance that route-leak-detection community will pass through ISP that already has configuration mistakes is highly increased.
       </t>
 
       <t>
