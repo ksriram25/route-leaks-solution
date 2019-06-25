@@ -47,10 +47,9 @@
       <organization abbrev="Yandex">Yandex</organization>
       <address>
          <postal>
-          <street></street>
+          <street>Ulitsa Lva Tolstogo 16</street>
           <city>Moscow</city>
-          <region></region>
-          <code></code>
+          <code>119021</code>
           <country>Russia</country>
         </postal>
         <email>a.e.azimov@gmail.com</email>
@@ -67,9 +66,9 @@
 
     <abstract>
       <t>
-        Problem definition for route leaks and enumeration of types of route leaks are provided in RFC 7908.
-        This document describes a inter-AS (multi-hop) solution for detection and mitigation route leaks which is based on conveying route-leak detection information in two new well-known BGP communities: route leak detection community (RLD) and route leak notification community (RLN).
-        These communities gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
+        Problem definition for route leaks and enumeration of types of route leaks are provided in <xref target="RFC7908"/>.
+        This document describes a inter-AS (multi-hop) solution for detection and mitigation route leaks which is based on conveying route-leak detection information in new well-known large community - route leak detection community (RLD).
+        RLD community gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
         This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
       </t>
     </abstract>
@@ -79,13 +78,13 @@
   <middle>
     <section title="Introduction">
       <t>
-        RFC 7908 <xref target="RFC7908"></xref> provides a definition of the route leak problem, and enumerates several types of route leaks.
+        <xref target="RFC7908"/> provides a definition of the route leak problem, and enumerates several types of route leaks.
         For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer.
-        The commonly used policy is that a route received from a transit provider or a lateral peer may be forwarded only to customers.
+        The commonly used policy is that a route received from a transit provider or a lateral peer MAY be forwarded only to customers.
       </t>
       <t>
         This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak information in a Border Gateway Protocol (BGP) community.
-        These document specified two well-known communities for these purpose - route leak detection (RLP) and route leak notification (RLN) community.
+        These document specifies well-known community for these purpose - route leak detection (RLP).
         Its configuration policies MUST be defined according to peering relations between ISPs.
         If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured, community configuration SHOULD be implemented in code of routing software.
       </t>
@@ -112,13 +111,13 @@
       </t>
     </section>
 
-    <section anchor="community" title="Communities vs Attribute">
+    <section anchor="community" title="Community vs Attribute">
       <t>
         In this section will be discussed the advantages and disadvantages of communities and BGP path attributes for the purpose of route leak detection.
       </t>
 
       <t>
-        The transit path attributes seem to be a native way to implement route leak detection signals.
+        The transit path attribute seem to be a native way to implement route leak detection signal.
         The way BGP process unknown transit attributes guarantees that such a signal will pass through outdated BGP implementations without any change.
         The main disadvantage lays on a fact that such deployment will require a software update which will postpone wide adoption for years.
       </t>
@@ -132,7 +131,7 @@
 
       <t>
         With the knowledge that route leaks can disrupt Internet connectivity in the region or even globally the authors believe that it's better to move forward with route leak detection using communities.
-        It's no a theoretical threat - it's constantly happening events.
+        It's not a theoretical threat - it's constantly happening events.
       </t>
 
       <t>
@@ -144,99 +143,58 @@
 
       <t>
         While it's not part of this document the described bellow signals can be easily translated into BGP path attributes.
-        The authors suggest to evaluate the effectiveness of leak detection using communities, and if needed implement signals via attributes too.
+        The authors suggest to evaluate the effectiveness of leak detection using community, and if needed implement signal via path attribute too.
       </t>
     </section>
 
     <section anchor="detection" title="Route-Leak Detection Community">
       <t>
+        This section specifies exact semantics of route-leak-detection community and its usage.
         The RLD community MUST follow next semantics:
         <list style="numbers">
           <t>4200000000 - suggested class for well-known transit large communities;</t>
           <t>1 - RLD subclass;</t>
           <t>value - ASN who set the community</t>
         </list>
-        This community MUST be set if route is announced to Customer, RS-client or Peer with ASN value equal to sender.
+        This community MUST be set if route is announced to Customer, RS-client or Peer with ASN value equal to the senders Administrator ID.
       </t>
       <t>
-        The are three rules that enable detection of route leaks:
+        The are three rules that enable detection and mitigation of route leaks:
         <list style="symbols">
-          <t>If route with RLD community set is received from Customer or RS-client - it's a route leak</t>
-          <t>If route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak</t>
-          <t>If route with RLN (see bellow) community set is received from any eBGP session - it's a route leak</t>
+          <t>If route with RLD community set is received from Customer or RS-client - it's a route leak and MUST be rejected.</t>
+          <t>If route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak and MUST be rejected.</t>
+          <t>A route with RLD community set MUST not be sent to Peer, Provider or RS.</t>
         </list>
-        This three rules provide an easy way to detect policy violation at the per-prefix granularity.
-      </t>
-    </section>
-
-    <section anchor="notification" title="Route-Leak Notification Community">
-      <t>
-        In the previous section was described a method to detect route leaks using RLN community.
-        In this section will be discussed different options what ISP SHOULD do if route leak is detected.
-        The straightforward way is to reject leaked routes.
-        But such filtering strategy might have side-effects.
-      </t>
-
-      <t>
-        If the prefix has a single path to Tier1 providers its whole connectivity depends on this path existence.
-        And if this path is leaked, and rejected afterward by transit ISP, including Tier1, it will make this prefix partially unavailable.
-        So, in this case, the victim may experience DoS because of the mistake of the third party.
-        We found that more than connectivity of 100 thousand of prefixes (about 15% of all prefixes in the today full view table) relies on a single from origin to Tier1 path and thus can be affected.
-        The deprioritization is a soft way to stop route leak propagation that solves the problem of possible outages.
-      </t>
-
-      <t>
-        But propagation of leaked should be also done with caution.
-        When the prefix is received from provider RLD community can't be used to tell if the route was leaked or not.
-        And if it was leaked it may result in BGP wedges scenario or even create a stable oscillation with dynamic BGP loops.
-      </t>
-
-      <t>
-        To address this issue we introduce another well-known BGP community Route Leak Notification (RLN).
-        It has next semantics:
-        <list style="numbers">
-          <t>4200000000 - suggested class for well-known large communities;</t>
-          <t>2 - RLN subclass;</t>
-          <t>value - ASN who set the community</t>
-        </list>
-      </t>
-    </section>
-
-    <section anchor="mitigation" title="Route-Leak Notification Mitigation">
-      <t>
-        In previous sections were described ways to detect route leaks using RLD and RLN communities.
-        In this section will be presented suggested method for route leak mitigation.
-      </t>
-
-      <t>
-        <list style="symbols">
-          <t>If leaked prefix is learned from RS-client it MUST be rejected</t>
-          <t>If leaked prefix is learned from Peer, Provider or RS and network has default route it MUST be rejected</t>
-          <t>Otherwise LOCALE PREF value MUST be be set to 0 and RLN community MUST be added</t>
-        </list>
-        These rules complements detection measures via RLD community described in previous section.
+        These rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
     </section>
 
     <section anchor="Security" title="Security Considerations">
       <t>
-        With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>.
-        However, that concern does not apply to the RLD and RLN communities because it is a transitive community that must propagate as far as the update goes.
+        In specific circumstances at the state of partial adoption, route leak detection mechanism can result in DoS for the victim prefix.
+        Such scenario may happen only for prefixes that has a single path from originator to Tier1 and doesn't covered with less specific prefixes with multiple paths to Tier1.
+        If in such unreliable topology route leak gets injected in this single path at may be rejected, thus limiting prefix visibility.
+        While such anomaly is unlikely to happen, such an issue should be easy to debug, since it directly affects the sequence of originator's providers.
       </t>
+
       <t>
-        The proposed route leak information carried in the RLD and RLN communities can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
-        In the future, if there is BGPsec deployment, the RLP and RLN information can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>.
+        With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>.
+        However, that concern does not apply to the RLD community because it is a transitive community that must propagate as far as the update goes.
+      </t>
+
+      <t>
+        The proposed route leak information carried in the RLD community can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
+        In the future, if there is BGPsec deployment, the RLD community can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>.
         So, the cryptographic security mechanisms in BGPsec can also secure the route leak detection information.
         The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
       </t>
 
     </section>
 
-
     <section anchor="IANA" title="IANA Considerations">
       <t>
         The draft suggests to reserve Global Administrator ID 4200000000 for transit well-known large community registry.
-        IANA is requested to register RLN and RLD in the well-known large community <xref target="RFC8092"></xref> registry.
+        IANA is requested to register RLD community in the well-known large community <xref target="RFC8092"></xref> registry.
       </t>
     </section>
   </middle>
