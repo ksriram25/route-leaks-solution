@@ -4,7 +4,6 @@
 
 <!ENTITY RFC7908 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7908.xml">
 <!ENTITY RFC8092 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8092.xml">
-<!ENTITY RFC8205 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8205.xml">
 <!ENTITY I-D.ietf-idr-bgp-open-policy SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-bgp-open-policy.xml">
 <!--
 <!ENTITY I-D.ietf-idr-aspath-orf SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-aspath-orf.xml">
@@ -67,9 +66,8 @@
     <abstract>
       <t>
         Problem definition for route leaks and enumeration of types of route leaks are provided in <xref target="RFC7908"/>.
-        This document describes a inter-AS (multi-hop) solution for detection and mitigation route leaks which is based on conveying route-leak detection information in new well-known large community - route leak detection community (RLD).
-        RLD community gives ISPs an easy way to detect route leaks, and, if needed, propagate information about such incidents.
-        This solution complements the intra-AS (local AS) route-leak avoidance solution that is described in ietf-idr-bgp-open-policy draft.
+        This document describes a new well known large community that gives a way for both route leak prevention and detection.
+        The configuration process for these community can be automated with BGP roles that are defined in ietf-idr-bgp-open-policy draft.
       </t>
     </abstract>
 
@@ -83,10 +81,9 @@
         The commonly used policy is that a route received from a transit provider or a lateral peer MAY be forwarded only to customers.
       </t>
       <t>
-        This document describes a solution for detection and mitigation route leaks which is based on conveying route-leak information in a Border Gateway Protocol (BGP) community.
-        These document specifies well-known community for these purpose - route leak detection (RLP).
+        This document describes a solution for prevention, detection and mitigation route leaks which is based on conveying route-leak detection information in a BPF large community.
         Its configuration policies MUST be defined according to peering relations between ISPs.
-        If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured, community configuration SHOULD be implemented in code of routing software.
+        If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured, community configuration SHOULD be implemented in code of the routing software.
       </t>
       <t>
         Described technique can be incrementally deployed.
@@ -106,8 +103,15 @@
         </list>
       </t>
       <t>
-        If the route is announced to a customer, peer or RS-client it MUST go 'only down' and should not be received by other ISPs from links with customers, peers or from route server at internet exchange point.
-        So, we need a transit signal that will tell a remote ISP that receiving prefix violates 'only down' rule and thus providing a way to stop the propagation of leaked prefixes.
+        If route is received from provider, peer or RS-client is MUST follow 'only down' rule - it MAY be advertised only to customers.
+        If route is sent to customer, peer or RS-client it also MUST follow 'only down' rule.
+      </t>
+      <t>
+        The common technique to implement internal 'only down' rule is to use BGP communities, but these communities differ from network to network and can be removed at the receipt.
+        So, we need a standardized transit signal that will prevent networks from leaking and tell a remote ISP that receiving prefix violates 'only down' rule at the same time, thus providing a way to stop the propagation of leaked prefixes.
+      </t>
+      <t>
+        To improve reliability such signal should be set on both sender and receiver side.
       </t>
     </section>
 
@@ -167,18 +171,32 @@
 ]]>
           </artwork>
         </figure>
-        This community MUST be set if route is announced to Customer, RS-client or Peer with ASN value equal to the senders Administrator ID.
+      </t>
+      <t>
+        This community MUST have route policy configuration on both egress and ingress filters.
       </t>
 
       <t>
-        The are three rules that enable detection and mitigation of route leaks:
-        <list style="symbols">
-          <t>If route with RLD community set is received from Customer or RS-client - it's a route leak and MUST be rejected.</t>
-          <t>If route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak and MUST be rejected.</t>
-          <t>A route with RLD community set MUST not be sent to Peer, Provider or RS.</t>
+        The ingress policy MUST follow next procedure:
+        <list style="numbers">
+          <t>If a route with RLD community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
+          <t>If a route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
+          <t>If a route is received from Provider, Peer or RS the RLD community MUST be added with value equal to global administrator ID of the receiver.</t>
         </list>
-        These rules provide an easy way to detect policy violation at the per-prefix granularity.
       </t>
+
+      <t>
+        The egress policy MUST follow next procedure:
+        <list style="numbers">
+          <t>A route with RLD community set MUST not be sent to providers, peers and RS.</t>
+          <t>If route is sent to customer or peer RLD community MUST be added with value equal to global administrator ID of the sender.</t>
+        </list>
+      </t>
+
+      <t>
+        These rules provide support for both route leak prevention and detection.
+      </t>
+
     </section>
 
     <section anchor="Security" title="Security Considerations">
@@ -193,14 +211,6 @@
         With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>.
         However, that concern does not apply to the RLD community because it is a transitive community that must propagate as far as the update goes.
       </t>
-
-      <t>
-        The proposed route leak information carried in the RLD community can benefit from cryptographic protection to prevent abuse by malicious actors in the AS path.
-        In the future, if there is BGPsec deployment, the RLD community can be encoded in the Flags field in the Secure_Path Segment in BGPsec updates <xref target="RFC8205"></xref>.
-        So, the cryptographic security mechanisms in BGPsec can also secure the route leak detection information.
-        The reader is directed to the security considerations provided in <xref target="RFC8205"></xref>.
-      </t>
-
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
@@ -215,7 +225,6 @@
     <references title="Informative References">
       &RFC7908;
       &RFC8092;
-      &RFC8205;
 
       &I-D.ietf-idr-bgp-open-policy;
 
