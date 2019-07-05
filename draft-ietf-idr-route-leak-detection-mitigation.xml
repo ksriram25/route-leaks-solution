@@ -181,7 +181,7 @@
         <list style="numbers">
           <t>If a route with RLD community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
           <t>If a route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
-          <t>If a route is received from Provider, Peer or RS the RLD community MUST be added with value equal to global administrator ID of the receiver.</t>
+          <t>If a route is received from Provider, Peer or RS the RLD community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
         </list>
       </t>
 
