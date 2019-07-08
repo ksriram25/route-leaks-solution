@@ -195,7 +195,20 @@
       <t>
         These rules provide support for both route leak prevention and detection.
       </t>
+    </section>
 
+    <section title="Implementation Considerations">
+      <t>
+        It was observed that the majority of BGP implementations doesn't support negative match for communities like a:b:!c.
+        In this case it is suggested to replace second rule from ingress policy with next one:
+      </t>
+      <t>
+        If a route with DO community set is received from Peer and DO value is equal to neighbor ASN - it's a valid route, otherwise it is a route leak. The procedure halts.
+      </t>
+      <t>
+        This rule is based on a weaker assumption that a peer that is doing marking is also doing filtering.
+        But in return, such rule can be easily implemented with two consecutive matching rules.
+      </t>
     </section>
 
     <section anchor="Security" title="Security Considerations">
