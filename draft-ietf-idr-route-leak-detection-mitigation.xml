@@ -76,12 +76,12 @@
   <middle>
     <section title="Introduction">
       <t>
-        <xref target="RFC7908"/> provides a definition of the route leak problem, and enumerates several types of route leaks.
+        <xref target="RFC7908"/> provides a definition of the route leak problem and enumerates several types of route leaks.
         For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer.
         The commonly used policy is that a route received from a transit provider or a lateral peer MAY be forwarded only to customers.
       </t>
       <t>
-        This document describes a solution for prevention, detection and mitigation route leaks which is based on conveying route-leak detection information in a BPF large community.
+        This document describes a solution for prevention, detection and mitigation route leaks which is based on conveying route-leak detection information in a well known large community.
         Its configuration policies MUST be defined according to peering relations between ISPs.
         If BGP Roles described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref> are configured, community configuration SHOULD be implemented in code of the routing software.
       </t>
@@ -103,12 +103,12 @@
         </list>
       </t>
       <t>
-        If route is received from provider, peer or RS-client is MUST follow 'only down' rule - it MAY be advertised only to customers.
-        If route is sent to customer, peer or RS-client it also MUST follow 'only down' rule.
+        If a route is received from provider, peer or RS-client is MUST follow 'only down' rule - it MAY be advertised only to customers.
+        If a route is sent to customer, peer or RS-client it also MUST follow 'only down' rule.
       </t>
       <t>
         The common technique to implement internal 'only down' rule is to use BGP communities, but these communities differ from network to network and can be removed at the receipt.
-        So, we need a standardized transit signal that will prevent networks from leaking and tell a remote ISP that receiving prefix violates 'only down' rule at the same time, thus providing a way to stop the propagation of leaked prefixes.
+        So, we need a standardized transit signal that will prevent networks from leaking and tell a remote ISP that receiving prefix violates 'only down' policy, thus providing a way to stop the propagation of leaked prefixes.
       </t>
       <t>
         To improve reliability such signal should be set on both sender and receiver side.
@@ -121,15 +121,15 @@
       </t>
 
       <t>
-        The transit path attribute seem to be a native way to implement route leak detection signal.
+        The transit path attribute seems to be a native way to implement route leak detection signal.
         The way BGP process unknown transit attributes guarantees that such a signal will pass through outdated BGP implementations without any change.
-        The main disadvantage lays on a fact that deployment of new BGP attribute requires a software update which will postpone wide adoption for years.
+        The main disadvantage lays on a fact that deployment of new BGP attribute requires a software update which may postpone wide adoption for years.
       </t>
 
       <t>
-        In opposite, communities doesn't require software update.
+        In opposite, communities don't require a software update.
         The main disadvantage of communities is that its usage is highly overloaded.
-        They already have multiple use cases: different types of route marking, route policy control, blackholing and etc.
+        They already have numerous applications: different types of route marking, route policy control, blackholing and etc.
         That's why a significant number of networks with purpose or accidentally are removing communities on receipt, even well-known ones.
       </t>
 
@@ -146,16 +146,15 @@
       </t>
 
       <t>
-        While it's not part of this document the described bellow signal can be easily translated into BGP path attribute.
-        The authors suggest to evaluate the effectiveness of leak detection using community, and if needed implement signal via path attribute too.
+        While it's not part of this document the described below signal can be easily translated into BGP path attribute.
       </t>
     </section>
 
-    <section anchor="detection" title="Route-Leak Detection Community">
+    <section anchor="detection" title="Down Only Community">
       <t>
         This section specifies exact semantics of route-leak-detection community and its usage.
-        The RLD community MUST follow next semantics:
-        <figure align="center" anchor="fig2" title="Format of the RLP Community using a Large Community [RFC8092].">
+        The Down Only (DO) community MUST follow next semantics:
+        <figure align="center" anchor="fig2" title="Format of the DO Community using a Large Community [RFC8092].">
           <artwork align="left"><![CDATA[
 
  0                   1                   2                   3
@@ -163,7 +162,7 @@
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |         4200000000 (suggested global administrator)           |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            1 (suggested subclass for RLD)                     |
+|            1 (suggested subclass for DO)                      |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 |                ASN who set the community                      |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
@@ -179,17 +178,17 @@
       <t>
         The ingress policy MUST follow next procedure:
         <list style="numbers">
-          <t>If a route with RLD community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
-          <t>If a route with RLD community set is received from Peer and RLD value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
-          <t>If a route is received from Provider, Peer or RS the RLD community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
+          <t>If a route with DO community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
+          <t>If a route with DO community set is received from Peer and DO value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
+          <t>If a route is received from Provider, Peer or RS the DO community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
         </list>
       </t>
 
       <t>
         The egress policy MUST follow next procedure:
         <list style="numbers">
-          <t>A route with RLD community set MUST not be sent to providers, peers and RS.</t>
-          <t>If route is sent to customer or peer RLD community MUST be added with value equal to global administrator ID of the sender.</t>
+          <t>A route with DO community set MUST not be sent to providers, peers and RS.</t>
+          <t>If route is sent to customer or peer DO community MUST be added with value equal to global administrator ID of the sender.</t>
         </list>
       </t>
 
@@ -202,21 +201,21 @@
     <section anchor="Security" title="Security Considerations">
       <t>
         In specific circumstances at the state of partial adoption, route leak detection mechanism can result in DoS for the victim prefix.
-        Such scenario may happen only for prefixes that has a single path from originator to Tier1 and which is not covered with less specific prefixes with multiple paths to Tier1.
-        If, in such unreliable topology, route leak gets injected in this single path at may be rejected by upper providers, thus limiting prefix visibility.
+        Such a scenario may happen only for prefixes that have a single path from the originator to Tier1 and which is not covered with less specific prefixes with multiple paths to Tier1.
+        If, in such unreliable topology, route leak is injected inside this single path it may be rejected by upper providers, thus limiting prefix visibility.
         While such anomaly is unlikely to happen, such an issue should be easy to debug, since it directly affects the sequence of originator's providers.
       </t>
 
       <t>
         With the use of BGP community, there is often a concern that the community propagates beyond its intended perimeter and causes harm <xref target="streibelt"></xref>.
-        However, that concern does not apply to the RLD community because it is a transitive community that must propagate as far as the update goes.
+        However, that concern does not apply to the DO community because it is a transitive community that must propagate as far as the update goes.
       </t>
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
       <t>
         The draft suggests to reserve Global Administrator ID 4200000000 for transit well-known large community registry.
-        IANA is requested to register RLD community in the well-known large community <xref target="RFC8092"></xref> registry.
+        IANA is requested to register DO community in the well-known large community <xref target="RFC8092"></xref> registry.
       </t>
     </section>
   </middle>
