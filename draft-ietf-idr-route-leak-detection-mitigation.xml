@@ -4,6 +4,7 @@
 
 <!ENTITY RFC7908 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7908.xml">
 <!ENTITY RFC8092 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8092.xml">
+<!ENTITY RFC4264 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4264.xml">
 <!ENTITY I-D.ietf-idr-bgp-open-policy SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-bgp-open-policy.xml">
 <!--
 <!ENTITY I-D.ietf-idr-aspath-orf SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-aspath-orf.xml">
@@ -140,7 +141,7 @@
 
       <t>
         To nevilate listed disadvantages of community usage, we suggest using large communities, which have much higher capacity, so it should be less overloaded.
-        We suggest reserving 4200000000 class for the purpose of transit well-known communities that MUST not be stripped on both ingress and egress filters.
+        We suggest reserving &lt;TBD1&gt;; class for the purpose of transit well-known communities that MUST not be stripped on both ingress and egress filters.
         Also, policy violation is itself result of absent or improper community configuration.
         So, the chance that route-leak-detection community will pass through ISP that already has configuration mistakes is increased.
       </t>
@@ -160,41 +161,92 @@
  0                   1                   2                   3
  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|         4200000000 (suggested global administrator)           |
+|        TBD1 (class for well known transit communities)        |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|            1 (suggested subclass for DO)                      |
+|                   TBD2 (subclass for DO)                      |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
-|                ASN who set the community                      |
+|                             ASN                               |
 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 
 ]]>
           </artwork>
         </figure>
       </t>
-      <t>
-        This community MUST have route policy configuration on both egress and ingress filters.
-      </t>
 
       <t>
-        The ingress policy MUST follow next procedure:
-        <list style="numbers">
-          <t>If a route with DO community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
-          <t>If a route with DO community set is received from Peer and DO value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
-          <t>If a route is received from Provider, Peer or RS the DO community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
-        </list>
+        The authors studied different options for route leak mitigation.
+        The main options are drop route leaks, deprioritize route leaks or pass them on.
+        It proved out that loose mode that uses deprioritization isn't safe.
+        There TE technique which limits prefix visibility is quite common.
+        It may happen when a more specific prefix is sent only to downstreams, when more specific prefixes are sent only to IX(es)/selected peers, when control communities are used to restrict its propagation.
+        If such prefix is leaked, deprioritization will not stop route leak propagation.
+        In addition, propagation of leaked prefixes with lower priority may result in priority loops leading to BGP wedgies <xref target="RFC4264"/> or even stable route oscillations.
+      </t>
+      <t>
+        So, the only safe way to implement route leak mitigation is to drop route leaks.
+        Corresponding ingress and egress policy is described in <xref target="mitigation"/>.
+        This policy SHOULD be used as a default behaviour.
+      </t>
+      <t>
+        Nevertheless, early adopters might want to study the signal before applying route leak mitigation policy.
+        They are also encouraged to make limited marking, which is described in <xref target="marking"/>.
       </t>
 
-      <t>
-        The egress policy MUST follow next procedure:
-        <list style="numbers">
-          <t>A route with DO community set MUST not be sent to providers, peers and RS.</t>
-          <t>If route is sent to customer or peer DO community MUST be added with value equal to global administrator ID of the sender.</t>
-        </list>
-      </t>
+      <section title="Route Leak Mitigation" anchor="mitigation">
+        <t>
+          This section describes ingress and egress policies that MUST be used to perform route leak prevention, detection and mitigation using DO community.
+        </t>
+        <t>
+          The ingress policy MUST follow next procedure:
+          <list style="numbers">
+            <t>If a route with DO community set is received from Customer or RS-client - it's a route leak and MUST be rejected. The procedure halts.</t>
+            <t>If a route with DO community set is received from Peer and DO value isn't equal to neighbor ASN - it's a route leak and MUST be rejected. The procedure halts.</t>
+            <t>If a route is received from Provider, Peer or RS the DO community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
+          </list>
+        </t>
+        <t>
+          The egress policy MUST follow next procedure:
+          <list style="numbers">
+            <t>A route with DO community set MUST not be sent to providers, peers and RS.</t>
+            <t>If route is sent to customer or peer DO community MUST be added with value equal to global administrator ID of the sender.</t>
+          </list>
+        </t>
 
-      <t>
-        These rules provide support for both route leak prevention and detection.
-      </t>
+        <t>
+          These rules provide support for both route leak prevention and detection.
+          This policy SHOULD be used as a default behaviour.
+        </t>
+
+      </section>
+
+      <section title="Only Marking" anchor="marking">
+        <t>
+          This section describes ingress and egress marking policies that MUST be used if the network is not performing route leak prevention and mitigation but wants to use marking with DO community.
+          The difference in marking from the above section guarantees that this marking will not limit leak detection opportunities of the third parties.
+        </t>
+        <t>
+          The ingress marking policy MUST follow next procedure:
+          <list style="numbers">
+            <t>If a route with DO community set is received from Customer or RS-client - it's a route leak. The procedure halts.</t>
+            <t>If a route with DO community set is received from Peer and DO value isn't equal to neighbor ASN - it's a route leak. The procedure halts.</t>
+            <t>If a route is received from Provider, Peer or RS the DO community MUST be added with value equal to global administrator ID of the neighbor (sender).</t>
+          </list>
+        </t>
+
+        <t>
+          The egress marking policy MUST follow next procedure:
+          <list style="numbers">
+            <t>If route is sent to customer or RS-client DO community MUST be added with value equal to global administrator ID of the sender.</t>
+            <t>If DO community is not set and route is sent to peer DO community MUST be added with value equal to global administrator ID of the sender.</t>
+          </list>
+        </t>
+
+        <t>
+          These rules specify DO signal that can be used to evaluate affect of route leak mitigation policy before dropping route leaks.
+          It also improves overall signal thus increasing opportunity of the third parties to detect and mitigate route leaks.
+        </t>
+      </section>
+
     </section>
 
     <section title="Implementation Considerations">
@@ -207,7 +259,7 @@
       </t>
       <t>
         This rule is based on a weaker assumption that a peer that is doing marking is also doing filtering.
-        But in return, such rule can be easily implemented with two consecutive matching rules.
+        That's why networks that do not follow route leak mitigation policy <xref target="mitigation"/> MUST carefully follow marking rules described in <xref target="marking"/>
       </t>
     </section>
 
@@ -227,8 +279,8 @@
 
     <section anchor="IANA" title="IANA Considerations">
       <t>
-        The draft suggests to reserve Global Administrator ID 4200000000 for transit well-known large community registry.
-        IANA is requested to register DO community in the well-known large community <xref target="RFC8092"></xref> registry.
+        The draft suggests to reserve Global Administrator ID &lt;TBD1&gt;; for transit well-known large community registry.
+        IANA is requested to register a subclass &lt;TBD2&gt;; for DO community in this registry.
       </t>
     </section>
   </middle>
@@ -237,6 +289,7 @@
     <references title="Informative References">
       &RFC7908;
       &RFC8092;
+      &RFC4264;
 
       &I-D.ietf-idr-bgp-open-policy;
 
