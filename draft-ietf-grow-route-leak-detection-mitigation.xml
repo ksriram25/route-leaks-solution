@@ -5,6 +5,8 @@
 <!ENTITY RFC7908 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.7908.xml">
 <!ENTITY RFC8092 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8092.xml">
 <!ENTITY RFC4264 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.4264.xml">
+<!ENTITY RFC2119 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.2119.xml">
+<!ENTITY RFC8174 SYSTEM "http://xml.resource.org/public/rfc/bibxml/reference.RFC.8174.xml">
 <!ENTITY I-D.ietf-idr-bgp-open-policy SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-bgp-open-policy.xml">
 <!--
 <!ENTITY I-D.ietf-idr-aspath-orf SYSTEM "http://xml.resource.org/public/rfc/bibxml3/reference.I-D.ietf-idr-aspath-orf.xml">
@@ -25,9 +27,9 @@
 <?rfc compact="yes" ?>
 <?rfc subcompact="no" ?>
 
-<rfc category="std" docName="draft-ietf-grow-route-leak-detection-mitigation-02" ipr="trust200902">
+<rfc category="std" docName="draft-ietf-grow-route-leak-detection-mitigation-04" ipr="trust200902">
   <front>
-    <title abbrev="Route Leak Detection and Mitigation"> Methods for Detection and Mitigation of BGP Route Leaks </title>
+    <title abbrev="Route-Leak Detection and Mitigation"> Methods for Detection and Mitigation of BGP Route Leaks </title>
 
     <author fullname="Kotikalapudi Sriram" initials="K." role="editor" surname="Sriram">
       <organization abbrev="USA NIST">USA National Institute of Standards and Technology</organization>
@@ -56,18 +58,18 @@
       </address>
     </author>
 
-    <date year="2020" />
+    <date year="" />
 
     <area>Routing</area>
 
     <workgroup>IDR and SIDR</workgroup>
 
-    <keyword>BGP, Route Leak Detection, Route-Leak Mitigation, BGP Security</keyword>
+    <keyword>BGP, Route-Leak Detection, Route-Leak Mitigation, BGP Security</keyword>
 
     <abstract>
       <t>
-        Problem definition for route leaks and enumeration of types of route leaks are provided in <xref target="RFC7908"/>.
-        This document describes a new well-known Large Community that provides a way for route leak prevention, detection, and mitigation.
+        Problem definition for route leaks and enumeration of types of route leaks are provided in RFC 7908.
+        This document describes a new well-known Large Community that provides a way for route-leak prevention, detection, and mitigation.
         The configuration process for this Community can be automated with the methodology for setting BGP roles that is described in ietf-idr-bgp-open-policy draft.
       </t>
     </abstract>
@@ -77,12 +79,12 @@
   <middle>
     <section title="Introduction">
       <t>
-        <xref target="RFC7908"/> provides a definition of the route leak problem and enumerates several types of route leaks.
+        RFC 7908 <xref target="RFC7908"/> provides a definition of the route-leak problem and enumerates several types of route leaks.
         For this document, the definition that is applied is that a route leak occurs when a route received from a transit provider or a lateral peer is forwarded (against commonly used policy) to another transit provider or a lateral peer.
         The commonly used policy is that a route received from a transit provider or a lateral peer MAY be forwarded only to customers.
       </t>
       <t>
-        This document describes a solution for prevention, detection and mitigation route leaks which is based on conveying route-leak detection information in a well-known BGP Large  Community.
+        This document describes a solution for prevention, detection and mitigation of route leaks which is based on conveying route-leak detection information in a transitive well-known BGP Large Community <xref target="RFC8092"/>.
         The configuration process for the Large Community MUST be defined according to peering relations between ISPs.
         This process can be automated with the methodology for setting BGP roles that is described in <xref target="I-D.ietf-idr-bgp-open-policy"></xref>.
 <!--
@@ -92,9 +94,15 @@
       </t>
       <t>
         The techniques described in this document can be incrementally deployed.
-        If a group of big ISPs and/or Internet Exchanges (IXes) deploy the proposed techniques, then they would be helping each other by blocking route leaks that can happen between them.
+        If a pair of ISPs and/or Internet Exchanges (IXes) deploy the proposed techniques, then they would detect and mitigate any route leaks that occur in an AS path between them even when other ASes in the path are not upgraded.
       </t>
+
+    <section title="Requirements Language">
+        <t>
+The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in BCP 14 <xref target="RFC2119"></xref> <xref target="RFC8174"></xref> when, and only when, they appear in all capitals, as shown here.
+        </t>
     </section>
+  </section>
 
     <section anchor="relations" title="Peering Relationships">
       <t>
@@ -108,14 +116,14 @@
         </list>
       </t>
       <t>
-        If a route is received from a provider, peer or RS-client, it MUST follow the 'down only' rule, i.e., it MAY be advertised only to customers.
-        If a route is sent to a customer, peer or RS-client, it also MUST follow the 'down only' rule at each subsequent AS in the AS path.
+        If a route is received from a provider, peer, or RS-client, it MUST follow the 'down only' rule, i.e., it MAY be advertised only to customers.
+        If a route is sent to a customer, peer, or RS-client, it also MUST follow the 'down only' rule at each subsequent AS in the AS path.
       </t>
       <t>
 <!--
         The common technique to implement internal 'down only' rule is to use BGP communities, but these communities differ from network to network and can be removed at the receipt.
 -->
-        A standardized transitive route-leak detection signal is needed that will prevent Autonomous Systems (ASes) from leaking and also inform a remote ISP (or AS) in the AS path that a received route violates 'down only' policy. This signal would facilitate a way to stop the propagation of leaked prefixes.
+        A standardized transitive route-leak detection signal is needed that will prevent Autonomous Systems (ASes) from leaking and also inform a remote ISP (or AS) in the AS path that a received route violates the 'down only' policy. This signal would facilitate a way to stop the propagation of leaked prefixes.
       </t>
       <t>
         To improve reliability and cover for non-participating preceding neighbor, the signal should be set on both receiver and sender sides.
@@ -124,48 +132,41 @@
 
     <section anchor="community" title="Community vs Attribute">
       <t>
-        This section presents a brief discussion of the advantages and disadvantages of communities and BGP path attributes for the purpose of route leak detection.
+        This section presents a brief discussion of the advantages and disadvantages of communities and BGP path attributes for the purpose of route-leak detection.
       </t>
 
       <t>
         A transitive path attribute is a native way to implement the route-leak detection signal.
         Based on the way BGP protocol works, the use of a transitive attribute makes it more certain that the route-leak detection signal would pass unaltered through non-participating (i.e., not upgraded) BGP routers.
-        The main disadvantage of this approach is that the deployment of a new BGP attribute requires a software upgrade in router OS which may delay wide adoption for years.
+        The main disadvantage of this approach is that the deployment of a new BGP attribute requires a software upgrade in the router OS which may delay wide adoption for years.
       </t>
 
       <t>
-        On the other hand, BGP communities do not require a router OS update.
+        On the other hand, BGP Communities do not require a router OS update.
         The potential disadvantage of using a Community for the route-leak detection signal is that it is more likely to be dropped somewhere along the way in the AS path. Currently, the use of BGP Communities is somewhat overloaded.
-        BGP Communities are already used for numerous applications: different types of route marking, route policy control, black-holing, etc.
-        It is observed that some ASes seem to purposefully or accidentally remove transitive communities on receipt, sometimes well-known ones. Perhaps this issue may be mitigated with strong policy guidance related to the handling of Communities.   
-      </t>
-
-      <t>
-        Due to frequently occurring regional and global disruptions in Internet connectivity, it is critical to move forward with a solution that is viable in the near term. That solution would be route leak detection using BGP Community.
-<!--
-        The harm that is done by route leaks is not a theory - it is constantly happening events.
--->
+        BGP Communities are already used for numerous applications: different types of route marking, route policy control, blackholing, etc.
+        It is observed that some ASes seem to purposefully or accidentally remove BGP Communities on receipt, sometimes well-known ones. Perhaps this issue may be mitigated with strong policy guidance related to the handling of Communities.   
       </t>
 
       <t>
         Large Communities have much higher capacity, and therefore they are likely to be less overloaded. Hence, Large Community is proposed to be used for route-leak detection.  
         This document suggests reserving &lt;TBD1&gt; class for the purpose of transitive well-known Large Communities that MUST NOT be stripped on ingress or egress.
-<!--
-        Also, policy violation is itself result of absent or improper  Community configuration.
-        So, the chance that route-leak-detection  Community will pass through ISP that already has configuration mistakes is increased.
--->
       </t>
 
       <t>
-        While it is not part of this document, the route-leak detection signal described here can also be carried in a BGP path attribute, and the same prevention and mitigation techniques as described here would apply. The authors are pursuing a separate internet draft in the IDR WG on that approach. 
+        While it is not a part of this document, the route-leak detection signal described here can also be carried in a transitive BGP Path Attribute, and similar prevention and mitigation techniques as described here would apply (see <xref target="I-D.ietf-idr-bgp-open-policy"></xref>).
+      </t>
+
+      <t>
+        Due to frequently occurring regional and global disruptions in Internet connectivity, it is critical to move forward with a solution that is viable in the near term. That solution would be route-leak detection using a well-known Large Community.
       </t>
     </section>
 
     <section anchor="detection" title="Down Only Community">
       <t>
-        This section specifies the semantics of route-leak-detection Community and its usage. This Community is given the specific name Down Only (DO) Community.   
+        This section specifies the semantics of route-leak detection Community and its usage. This Community is given the specific name Down Only (DO) Community.   
         The DO Community is carried in a BGP Large Community with a format as shown in <xref target="fig1"/>.
-        <figure align="center" anchor="fig1" title="Format of the DO Community using a Large Community [RFC8092].">
+        <figure align="center" anchor="fig1" title="Format of the DO Community using a BGP Large Community.">
           <artwork align="left"><![CDATA[
 
  0                   1                   2                   3
@@ -184,41 +185,41 @@
       </t>
 
       <t>
-        The authors studied different options for route leak mitigation.
+        The authors studied different options for route-leak mitigation.
         The main options considered are (1) drop detected route leaks and (2) deprioritize detected route leaks.
         It can be demonstrated that the loose mode that uses deprioritization is not safe.
-        Traffic Engineering (TE) technique which limit prefix visibility are quite common.
+        Traffic Engineering (TE) techniques which limit prefix visibility are quite common.
         It may happen that a more specific TE prefix is sent only to downstream ASes or to IX(es)/selected peers, and a control Community is used to restrict its propagation.
         If such a more specific prefix is leaked, deprioritization will not stop such a route leak from propagating.
         In addition, propagation of leaked prefixes based on deprioritization may result in priority loops leading to BGP wedgies <xref target="RFC4264"/> or even persistent route oscillations.
       </t>
       <t>
-        So, the only truly safe way to implement route leak mitigation is to drop detected route leaks.
+        So, the only truly safe way to implement route-leak mitigation is to drop detected route leaks.
         The ingress and egress policies corresponding to 'drop detected route leaks' is described in <xref target="mitigation"/>.
         This policy SHOULD be used as a default behavior.
       </t>
       <t>
-        Nevertheless, early adopters might want to deploy only the signaling and perhaps use it only for diagnostics before applying any route leak mitigation policy.
+        Nevertheless, early adopters might want to deploy only the signaling and perhaps use it only for diagnostics before applying any route-leak mitigation policy.
         They are also encouraged to use slightly limited marking, which is described in <xref target="marking"/>.
       </t>
 
-      <section title="Route Leak Mitigation" anchor="mitigation">
+      <section title="Route-Leak Mitigation" anchor="mitigation">
         <t>
-          This section describes the eBGP ingress and egress policies that MUST be used to perform route leak prevention, detection and mitigation using the DO Community.
+          This section describes the eBGP ingress and egress policies that MUST be used to perform route-leak prevention, detection and mitigation using the DO Community. It should be noted that a route may carry more than one DO Communities. Hence, in the rest of this document, "a route with DO Community" means "a route with one or more DO Communities".    
         </t>
         <t>
           The ingress policy MUST use the following procedure:
           <list style="numbers">
-            <t>If a route with DO Community set (i.e., DO is attached) is received from a Customer or RS-client, then it is a route leak and MUST be rejected. The procedure halts.</t>
-            <t>If a route with DO Community set is received from Peer (non-transit) and DO value is not equal to the sending neighbor's ASN, then it is a route leak and MUST be rejected. The procedure halts.</t>
-            <t>If a route is received from a Provider, Peer or RS, then the DO Community MUST be added with a value equal to the sending neighbor's ASN.</t>
+            <t>If a route with DO Community is received from a Customer or RS-client, then it is a route leak and MUST be dropped. The procedure halts.</t>
+            <t>If a route with DO Community is received from a Peer (non-transit) and at least one DO value is not equal to the sending neighbor's ASN, then it is a route leak and MUST be dropped. The procedure halts.</t>
+            <t>If a route is received from a Provider, Peer, or RS, then a DO Community MUST be added with a value equal to the sending neighbor's ASN.</t>
           </list>
         </t>
         <t>
           The egress policy MUST use the following procedure:
           <list style="numbers">
-            <t>A route with DO Community set MUST NOT be sent to Providers, Peers, and RS.</t>
-            <t>If a route is sent to a Customer or Peer, then the DO Community MUST be added with a value equal to the ASN of the sender.</t>
+            <t>A route with DO Community (i.e., DO Community was present or added at ingress) MUST NOT be sent to a Provider, Peer, or RS.</t>
+            <t>If a route is sent to a Customer or Peer, then a DO Community MUST be added with value equal to the ASN of the sender.</t>
           </list>
         </t>
 
@@ -231,32 +232,30 @@
 
       <section title="Only Marking" anchor="marking">
         <t>
-          This section describes eBGP ingress and egress marking policies that MUST be used if an AS is not performing route-leak  mitigation (i.e., dropping detected route leaks) as described in <xref target="mitigation"/>, but wants to use only marking with DO Community.
+          This section describes eBGP ingress and egress marking policies that MUST be used if an AS is not performing route-leak  mitigation (i.e., not dropping detected route leaks) as described in <xref target="mitigation"/>, but wants to use the DO Community only for marking. 
           The slightly limited DO marking (compared to that in <xref target="mitigation"/>) described below guarantees that this DO marking will not limit the leak detection opportunities for subsequent ASes in the AS path.
         </t>
         <t>
           The ingress policy MUST use the following procedure:
           <list style="numbers">
-            <t>If a route with DO Community set is received from a Customer or RS-client, then it is a route leak. The procedure halts.</t>
-            <t>If a route with DO Community set is received from a Peer and DO value is not equal to the sending neighbor's ASN, then it is a route leak. The procedure halts.</t>
-            <t>If a route is received from a Provider, Peer or RS, then the DO Community MUST be added with value equal to the sending neighbor's ASN.</t>
+            <t>If a route with DO Community is received from a Customer or RS-client, then it is a route leak. The procedure halts.</t>
+            <t>If a route with DO Community is received from a Peer (non-transit) and at least one DO value is not equal to the sending neighbor's ASN, then it is a route leak. The procedure halts.</t>
+            <t>If a route is received from a Provider, Peer, or RS, then a DO Community MUST be added with value equal to the sending neighbor's ASN.</t>
           </list>
         </t>
 
         <t>
           The egress policy MUST use the following procedure:
           <list style="numbers">
-            <t>If a route is sent to a Customer or RS-client, then the DO Community MUST be added with value equal to the ASN of the sender.</t>
-            <t>If DO Community is not set and the route is sent to a Peer, then the DO Community MUST be added with value equal to the ASN of the sender.</t>
-   
+            <t>If a route is sent to a Customer or RS-client, then a DO Community MUST be added with value equal to the ASN of the sender.</t>
+            <t>If a route without DO Community is sent to a Peer, then a DO Community MUST be added with value equal to the ASN of the sender.
+              Conversely, if a route with DO Community (i.e., DO Community was present or added at ingress) is sent to a Peer, then an additional DO Community MUST NOT be added.)
+            </t>
           </list>
         </t>
 
         <t>
-          These above procedures specify setting DO signal in a way that can be used to evaluate the potential impact of route leak mitigation policy before deploying strict dropping of detected route leaks.
-<!--
-          They also slightly modify DO signaling for this case thus sustaining opportunity for the third parties to detect and mitigate route leaks.
--->
+          These above procedures specify setting the DO signals in a way that can be used to evaluate the potential impact of route-leak mitigation policy before deploying strict dropping of detected route leaks.
         </t>
       </section>
 
@@ -264,30 +263,40 @@
 
     <section title="Implementation Considerations">
       <t>
-        It was observed that the majority of BGP implementations does not support negative match for communities like a:b:!c.
-        Considering that it is suggested to replace the second rule from ingress policy with the following:
+        It was observed that the majority of BGP implementations do not support negative match for communities like a:b:!c.
+        Further, it is observed that a route received from a compliant Peer (non-transit) adhering to procedures from either <xref target="mitigation"/> or <xref target="marking"/> will always have a single DO Community with value equal to the peer's ASN.
+        Hence, it is suggested to replace the second rule from the ingress policies (in <xref target="mitigation"/> and <xref target="marking"/>) with the following:
       </t>
+
       <t>
-        If a route with DO Community set is received from a Peer and DO value is equal to the sending neighbor's ASN, then it is a valid route, otherwise it is a route leak. The procedure halts.
+        <list style="">
+          <t>
+            In <xref target="mitigation"/>: If a route with DO Community is received from a Peer and a DO value is equal to the sending neighbor's ASN, then it is a valid route, otherwise it is a route leak and MUST be dropped. The procedure halts.
+          </t>
+          <t>
+            In <xref target="marking"/>: If a route with DO Community is received from a Peer and a DO value is equal to the sending neighbor's ASN, then it is a valid route, otherwise it is a route leak. The procedure halts.
+          </t>
+        </list>
       </t>
+
       <t>
-        This rule is based on a weaker assumption that a peer that is doing marking is also doing filtering (dropping detected leaks).
-        That is why networks that do not follow the route leak mitigation policy in <xref target="mitigation"/> MUST carefully follow marking rules described in <xref target="marking"/>.
+        This rule is based on a weaker assumption that a peer that is doing marking is also doing filtering (i.e., dropping detected leaks).
+        That is why networks that do not follow the route-leak mitigation policy in <xref target="mitigation"/> MUST carefully follow marking rules described in <xref target="marking"/>.
       </t>
     </section>
 
     <section anchor="IANA" title="IANA Considerations">
       <t>
-        The draft suggests to reserve a Global Administrator ID &lt;TBD1&gt; for transitive well-known Large Community registry.
-        IANA is requested to register a subclass &lt;TBD2&gt; for DO Community in this registry.
+        IANA is requested to reserve a Global Administrator ID &lt;TBD1&gt; for transitive well-known Large Community registry.
+        IANA is also requested to register a subclass &lt;TBD2&gt; for DO Community in this registry.
       </t>
     </section>
 
     <section anchor="Security" title="Security Considerations">
       <t>
-        In specific circumstances in a state of partial adoption, route leak mitigation mechanism can result in Denial of Service (DoS) for the victim prefix.
+        In specific circumstances in a state of partial adoption, route-leak mitigation mechanism can result in Denial of Service (DoS) for the victim prefix.
         Such a scenario may happen only for a prefix that has a single path from the originator to a Tier-1 ISP and only when the prefix is not covered with a less specific prefix with multiple paths to the Tier-1 ISP.
-        If, in such unreliable topology, route leak is injected somewhere inside this single path, then it may be rejected by upper layer providers in the path, thus limiting prefix visibility.
+        If, in such unreliable topology, a route leak is injected somewhere inside this single path, then it may be dropped by upper tier providers in the path, thus limiting prefix visibility.
         While such anomaly is unlikely to happen, such an issue should be easy to debug, since it directly affects the sequence of originator's providers.
       </t>
 
@@ -300,9 +309,16 @@
 
 
   <back>
+
+
+    <references title="Normative References">
+      &RFC2119;
+      &RFC8092;
+      &RFC8174;
+    </references>
+
     <references title="Informative References">
       &RFC7908;
-      &RFC8092;
       &RFC4264;
 
       &I-D.ietf-idr-bgp-open-policy;
